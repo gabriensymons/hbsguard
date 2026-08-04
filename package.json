@@ -1,0 +1,45 @@
+{
+  "name": "hbsguard",
+  "version": "0.1.0",
+  "description": "Standalone Handlebars linter using plain Handlebars AST semantics.",
+  "keywords": [
+    "handlebars",
+    "hbs",
+    "lint",
+    "linter",
+    "templates"
+  ],
+  "author": "Gabrien Symons",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gabriensymons/hbsguard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gabriensymons/hbsguard/issues"
+  },
+  "homepage": "https://github.com/gabriensymons/hbsguard#readme",
+  "main": "src/index.js",
+  "bin": {
+    "hbsguard": "bin/hbsguard.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "test:cli": "node --test test/cli.test.js",
+    "test:unit": "node --test test/unit.test.js",
+    "prepublishOnly": "npm test"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "handlebars": "^4.7.8"
+  }
+}
