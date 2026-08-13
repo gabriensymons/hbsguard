@@ -1,4 +1,14 @@
-# hbsguard
+<h1>hbsguard</h1>
+
+<p align="center">
+  <img src=".github/assets/hbsguard-logo.png" alt="hbsguard" width="394">
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/hbsguard"><img src="https://img.shields.io/npm/v/hbsguard.svg" alt="npm version"></a>
+  <a href="package.json"><img src="https://img.shields.io/node/v/hbsguard.svg" alt="Node.js version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/npm/l/hbsguard.svg" alt="license"></a>
+</p>
 
 `hbsguard` is a standalone, read-only Handlebars linter built around plain Handlebars AST semantics. It provides a generic `recommended` preset and a Fenrir-specific preset without coupling the published package to the Fenrir repository.
 
