@@ -79,6 +79,24 @@ Autofix is not supported in v1. Passing `--fix` exits with an error without modi
 - `1`: lint errors were found or the warning limit was exceeded
 - `2`: CLI, configuration, or runtime failure
 
+## Automation and coding agents
+
+`hbsguard` can be used as a read-only verification step by coding agents and other automated tools that edit Handlebars templates.
+
+For machine-readable diagnostics, run the locally installed version:
+
+```bash
+npx --no-install hbsguard "templates/**/*.hbs" --format json --max-warnings 0
+```
+
+Using `--no-install` ensures the command fails if `hbsguard` is not installed locally instead of downloading it automatically. Replace `templates/**/*.hbs` with a glob that matches the location of Handlebars templates in your project.
+
+A suggested agent instruction is:
+
+> After editing Handlebars files, run `npx --no-install hbsguard "templates/**/*.hbs" --format json --max-warnings 0`. Resolve the reported diagnostics without changing the lint configuration unless requested, then rerun the command. Do not pass `--fix`; `hbsguard` does not modify files.
+
+Treat any nonzero exit code as a failed verification step. See [Exit codes](#exit-codes) for details.
+
 ## Configuration
 
 Configuration is optional. To customize behavior, create `hbsguard.config.cjs` in the working directory:
