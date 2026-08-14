@@ -2,6 +2,12 @@
 
 All notable changes to hbsguard will be documented in this file.
 
+## 0.1.2 — 2026-08-14
+
+### Changed
+
+- Replace project-specific preset terminology in the npm README with a generic custom configuration example.
+
 ## 0.1.1 — 2026-08-14
 
 ### Added

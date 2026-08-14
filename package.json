@@ -1,6 +1,6 @@
 {
   "name": "hbsguard",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Standalone Handlebars linter using plain Handlebars AST semantics.",
   "keywords": [
     "handlebars",
