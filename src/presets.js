@@ -13,7 +13,7 @@ const PRESETS = {
       "no-invalid-bracket-path": "error",
     },
   },
-  fenrir: {
+  custom: {
     extends: ["recommended"],
     ignore: [".runtime-cache/**"],
     rules: {

@@ -67,7 +67,7 @@ test("loadConfig applies the recommended preset from hbsguard.config.cjs", (t) =
   assert.deepEqual(loaded.config.ignore, ["build/**"]);
 });
 
-test("loadConfig applies the fenrir preset with Fenrir-only semantic checks", (t) => {
+test("loadConfig applies the custom preset with project-specific semantic checks", (t) => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "hbsguard-config-"));
   t.after(() => fs.rmSync(workspace, { recursive: true, force: true }));
 
@@ -75,7 +75,7 @@ test("loadConfig applies the fenrir preset with Fenrir-only semantic checks", (t
     path.join(workspace, "hbsguard.config.cjs"),
     [
       "module.exports = {",
-      "  extends: ['fenrir']",
+      "  extends: ['custom']",
       "};",
       "",
     ].join("\n")
@@ -89,15 +89,15 @@ test("loadConfig applies the fenrir preset with Fenrir-only semantic checks", (t
   assert.deepEqual(loaded.config.ignore, [".runtime-cache/**"]);
 });
 
-test("fenrir preset ignores .runtime-cache during file discovery", (t) => {
-  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "hbsguard-fenrir-"));
+test("custom preset ignores .runtime-cache during file discovery", (t) => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "hbsguard-custom-"));
   t.after(() => fs.rmSync(workspace, { recursive: true, force: true }));
 
   fs.writeFileSync(
     path.join(workspace, "hbsguard.config.cjs"),
     [
       "module.exports = {",
-      "  extends: ['fenrir']",
+      "  extends: ['custom']",
       "};",
       "",
     ].join("\n")

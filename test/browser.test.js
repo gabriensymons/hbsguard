@@ -13,8 +13,8 @@ test("resolvePlaygroundConfig returns the recommended rules", () => {
   assert.deepEqual(config.ignore, []);
 });
 
-test("resolvePlaygroundConfig resolves inherited Fenrir rules", () => {
-  const config = resolvePlaygroundConfig("fenrir");
+test("resolvePlaygroundConfig resolves inherited custom rules", () => {
+  const config = resolvePlaygroundConfig("custom");
 
   assert.equal(config.rules.indentation, "off");
   assert.equal(config.rules["mustache-spacing"], "error");
