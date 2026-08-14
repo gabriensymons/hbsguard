@@ -109,7 +109,7 @@ const EXAMPLES = [
     id: "custom-config",
     label: "Custom rule override",
     description: "An extended configuration catches built-in block helpers used inline.",
-    preset: "fenrir",
+    preset: "custom",
     fileName: "custom-config.hbs",
     expectedRule: "no-bare-builtin-block-helpers",
     source: '{{if isAdmin "Admin" "Member"}}\n',
