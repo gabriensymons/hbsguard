@@ -57,6 +57,7 @@ jobs:
             "src/files.js",
             "src/formatters.js",
             "src/index.js",
+            "src/lint-text.js",
             "src/linter.js",
             "src/parser.js",
             "src/presets.js",
