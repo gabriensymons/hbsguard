@@ -14,7 +14,7 @@
   <strong><a href="https://gabriensymons.github.io/hbsguard/">Try hbsguard in the Playground →</a></strong>
 </p>
 
-`hbsguard` is a standalone, read-only Handlebars linter built around plain Handlebars AST semantics. It provides a generic `recommended` preset and a Fenrir-specific preset without coupling the published package to the Fenrir repository.
+`hbsguard` is a standalone, read-only Handlebars linter built around plain Handlebars AST semantics. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
 
 Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything.
 
@@ -101,17 +101,22 @@ module.exports = {
 
 Rules accept `"off"`, `"warn"`, or `"error"` severities. Numeric severities `0`, `1`, and `2` are also supported.
 
-### Fenrir preset
+### Custom configuration example
 
-The `fenrir` preset already extends `recommended`, so it should be enabled on its own:
+Projects can extend `recommended` and override individual rules for an existing template corpus:
 
 ```js
 module.exports = {
-  extends: ["fenrir"],
+  extends: ["recommended"],
+  ignore: [".runtime-cache/**"],
+  rules: {
+    indentation: "off",
+    "no-bare-builtin-block-helpers": "error",
+  },
 };
 ```
 
-It ignores `.runtime-cache/**`, disables `indentation` for the current Fenrir corpus, and enables `no-bare-builtin-block-helpers` for expressions such as `{{if foo}}` that should be written as `{{#if foo}}`.
+This example ignores generated runtime-cache files, disables `indentation` while an existing corpus is brought into compliance, and enables `no-bare-builtin-block-helpers` for expressions such as `{{if foo}}` that should be written as `{{#if foo}}`.
 
 ### Stricter spacing styles
 
@@ -139,7 +144,7 @@ This requires `{{ title }}` instead of `{{title}}`, and `{{> foo}}` instead of `
 | `eol-last` | Require a final newline. |
 | `linebreak-style` | Enforce Unix or Windows line endings. |
 | `no-invalid-bracket-path` | Report invalid bracket notation in Handlebars paths. |
-| `no-bare-builtin-block-helpers` | Disallow inline use of built-in block helpers; enabled by the `fenrir` preset. |
+| `no-bare-builtin-block-helpers` | Disallow inline use of built-in block helpers. |
 
 Handlebars parse errors are always reported, independently of configured rules. JSON output preserves the full parser diagnostic; stylish output presents a shorter message with source context.
 
@@ -170,4 +175,4 @@ npm test
 npm pack --dry-run --json
 ```
 
-The project intentionally remains read-only for its initial release; fix mode is deferred until lint behavior is stable on the Fenrir corpus.
+The project intentionally remains read-only for its initial release; fix mode is deferred until lint behavior is stable across existing template corpora.
