@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Try hbsguard in your browser with editable Handlebars examples and instant diagnostics."
+    >
+    <meta name="theme-color" content="#f8f3ed">
+    <title>hbsguard Playground</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="https://github.com/gabriensymons/hbsguard" aria-label="hbsguard on GitHub">
+          <img class="brand-logo brand-logo-light" src="./assets/hbsguard-logo.svg" alt="">
+          <img class="brand-logo brand-logo-dark" src="./assets/hbsguard-logo-dark.svg" alt="">
+        </a>
+        <nav class="header-actions" aria-label="Project links">
+          <a href="https://github.com/gabriensymons/hbsguard#readme">Docs</a>
+          <a href="https://github.com/gabriensymons/hbsguard">GitHub</a>
+          <button class="theme-toggle" id="theme-toggle" type="button">
+            <span class="theme-toggle-mark" aria-hidden="true"></span>
+            <span id="theme-toggle-label">Theme</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow"><span class="status-dot"></span> Browser playground · no install required</p>
+          <h1 id="page-title">Find the template problems hiding in plain sight.</h1>
+        </div>
+        <p class="intro-copy">
+          Edit a Handlebars example and see the same diagnostics hbsguard reports in your project.
+          Everything runs locally in this tab.
+        </p>
+      </section>
+
+      <section class="playground" aria-label="hbsguard Playground">
+        <div class="toolbar">
+          <label class="control control-wide" for="example-select">
+            <span>Example</span>
+            <select id="example-select"></select>
+          </label>
+          <label class="control" for="preset-select">
+            <span>Base config</span>
+            <select id="preset-select">
+              <option value="recommended">recommended</option>
+              <option value="empty">empty configuration</option>
+              <option value="fenrir">custom configuration example</option>
+            </select>
+          </label>
+          <button class="secondary-button" id="reset-button" type="button">Reset example</button>
+        </div>
+
+        <div class="workspace">
+          <section class="panel editor-panel" aria-labelledby="editor-heading">
+            <header class="panel-header">
+              <div>
+                <p class="panel-kicker">Template</p>
+                <h2 id="editor-heading">profile-card.hbs</h2>
+              </div>
+              <span class="live-label"><span></span>Live linting</span>
+            </header>
+            <div class="editor-shell">
+              <div class="line-numbers-viewport" aria-hidden="true">
+                <pre id="line-numbers">1</pre>
+              </div>
+              <textarea
+                id="source-editor"
+                aria-label="Handlebars source"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              ></textarea>
+            </div>
+            <section class="problems-section" aria-labelledby="problems-heading">
+              <header class="problems-header">
+                <h3 id="problems-heading">Problems</h3>
+                <div class="summary" id="summary" aria-live="polite"></div>
+              </header>
+              <div class="diagnostics-list" id="diagnostics-list"></div>
+            </section>
+          </section>
+
+          <section class="panel configuration-panel" aria-labelledby="configuration-heading">
+            <header class="panel-header">
+              <div>
+                <p class="panel-kicker">Experiment</p>
+                <h2 id="configuration-heading">Configuration</h2>
+              </div>
+              <span class="config-validity" id="config-validity">Valid JSON</span>
+            </header>
+
+            <div class="configuration-body">
+              <div class="configuration-grid">
+                <section class="configuration-section" aria-labelledby="overrides-heading">
+                  <div class="section-heading">
+                    <h3 id="overrides-heading">Try adding rule overrides</h3>
+                    <p>JSON is merged over the base config and applied as you type.</p>
+                  </div>
+                  <textarea
+                    class="config-editor"
+                    id="config-editor"
+                    aria-label="Playground configuration as JSON"
+                    autocomplete="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  >{
+  "rules": {}
+}</textarea>
+                </section>
+
+                <section class="configuration-section rules-section" aria-labelledby="available-rules-heading">
+                  <div class="section-heading">
+                    <h3 id="available-rules-heading">Available rules</h3>
+                    <p>Add a rule as a warning, then adjust its severity or options.</p>
+                  </div>
+                  <div class="available-rules" id="available-rules"></div>
+                </section>
+              </div>
+
+              <section class="resolved-config" aria-labelledby="resolved-config-heading">
+                <div class="resolved-config-heading">
+                  <div class="section-heading">
+                    <h3 id="resolved-config-heading">Resolved configuration</h3>
+                    <p>The complete configuration hbsguard uses for this example.</p>
+                  </div>
+                  <button
+                    class="copy-button"
+                    id="copy-config-button"
+                    type="button"
+                    aria-label="Copy resolved configuration"
+                    title="Copy resolved configuration"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 8h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z"></path>
+                      <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"></path>
+                    </svg>
+                    <span id="copy-config-label">Copy</span>
+                  </button>
+                </div>
+                <pre id="resolved-config-output"></pre>
+              </section>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="privacy-note" aria-label="Privacy information">
+        <span class="privacy-mark" aria-hidden="true">✓</span>
+        <div>
+          <strong>Your template stays in your browser.</strong>
+          <p>No source code is uploaded or stored by this Playground.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Built with hbsguard <span aria-hidden="true">·</span> MIT licensed</p>
+      <a href="https://www.npmjs.com/package/hbsguard">View on npm</a>
+    </footer>
+  </body>
+</html>
