@@ -1,12 +1,17 @@
 "use strict";
 
+const { performance } = require("node:perf_hooks");
+
 const { formatResults } = require("./formatters");
 const { loadConfig } = require("./config");
 const { lintFiles } = require("./linter");
 
-function runCli(argv, streams = {}) {
+function runCli(argv, streams = {}, options = {}) {
   const stdout = streams.stdout || process.stdout;
   const stderr = streams.stderr || process.stderr;
+  const cwd = options.cwd || process.cwd();
+  const env = options.env || process.env;
+  const now = options.now || (() => performance.now());
 
   try {
     const parsed = parseArgv(argv);
@@ -17,17 +22,21 @@ function runCli(argv, streams = {}) {
       return 0;
     }
 
+    const startTime = now();
     const { config } = loadConfig({
-      cwd: process.cwd(),
+      cwd,
       configPath: parsed.configPath,
     });
     const results = lintFiles(parsed.patterns, {
       config,
-      cwd: process.cwd(),
+      cwd,
     });
+    const elapsedMs = now() - startTime;
     const formattedResults = parsed.quiet ? hideWarnings(results) : results;
     const output = formatResults(formattedResults, parsed.format, {
-      cwd: process.cwd(),
+      cwd,
+      elapsedMs,
+      useColor: stdout.isTTY === true && !Object.hasOwn(env, "NO_COLOR"),
     });
 
     if (output) {

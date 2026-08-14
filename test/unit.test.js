@@ -314,15 +314,159 @@ test("direct directories outside cwd anchor ignores to the directory", (t) => {
   assert.deepEqual(files, [path.join(target, "templates", "keep.hbs")]);
 });
 
-test("JSON formatting preserves full parse-error diagnostics", () => {
+test("JSON formatting preserves full parse-error diagnostics byte-for-byte", () => {
   const diagnostic =
     "Parse error on line 1: Expecting 'ID', 'STRING', got 'INVALID'";
+  const results = [createFormatterResult({ ruleId: "parse-error", message: diagnostic })];
+  const output = formatResults(results, "json", {
+    elapsedMs: 1234,
+    useColor: true,
+  });
+
+  assert.equal(output, JSON.stringify(results, null, 2));
+  assert.equal(JSON.parse(output)[0].messages[0].message, diagnostic);
+});
+
+test("stylish formatting reports aligned file, problem, and elapsed-time totals", () => {
+  const results = [
+    createFormatterFile("/workspace/mixed.hbs", [
+      createFormatterMessage(2, "first error"),
+      createFormatterMessage(1, "first warning"),
+    ]),
+    createFormatterFile("/workspace/warning.hbs", [
+      createFormatterMessage(1, "second warning"),
+    ]),
+    createFormatterFile("/workspace/clean.hbs"),
+  ];
+
+  const output = formatResults(results, "stylish", {
+    cwd: "/workspace",
+    elapsedMs: 1234,
+  });
+
+  assert.equal(
+    getStylishSummary(output),
+    [
+      "Files:     2 with problems, 1 clean, 3 checked",
+      "Problems:  1 error, 2 warnings",
+      "Time:      1.23 s",
+    ].join("\n")
+  );
+});
+
+test("stylish formatting colors complete active count-label groups", () => {
+  const results = [
+    createFormatterFile("/workspace/mixed.hbs", [
+      createFormatterMessage(2, "first error"),
+      createFormatterMessage(2, "second error"),
+      createFormatterMessage(1, "first warning"),
+      createFormatterMessage(1, "second warning"),
+      createFormatterMessage(1, "third warning"),
+    ]),
+    createFormatterFile("/workspace/clean.hbs"),
+  ];
+
+  const output = formatResults(results, "stylish", {
+    cwd: "/workspace",
+    elapsedMs: 1234,
+    useColor: true,
+  });
+
+  assert.match(output, /\u001b\[31merror\u001b\[39m/u);
+  assert.match(output, /\u001b\[33mwarning\u001b\[39m/u);
+  assert.equal(
+    getStylishSummary(output),
+    [
+      "\u001b[1mFiles:\u001b[22m     \u001b[31m1 with problems\u001b[39m, \u001b[1m\u001b[32m1 clean\u001b[39m\u001b[22m, 2 checked",
+      "\u001b[1mProblems:\u001b[22m  \u001b[1m\u001b[31m2 errors\u001b[39m\u001b[22m, \u001b[1m\u001b[33m3 warnings\u001b[39m\u001b[22m",
+      "\u001b[1mTime:\u001b[22m      \u001b[1m\u001b[32m1.23 s\u001b[39m\u001b[22m",
+    ].join("\n")
+  );
+});
+
+test("stylish formatting leaves zero problem groups and checked totals plain", () => {
   const output = formatResults(
-    [createFormatterResult({ ruleId: "parse-error", message: diagnostic })],
-    "json"
+    [createFormatterFile("/workspace/clean.hbs")],
+    "stylish",
+    { cwd: "/workspace", elapsedMs: 1180, useColor: true }
   );
 
-  assert.equal(JSON.parse(output)[0].messages[0].message, diagnostic);
+  assert.equal(
+    output,
+    [
+      "\u001b[1mFiles:\u001b[22m     \u001b[1m\u001b[32m1 clean\u001b[39m\u001b[22m, 1 checked",
+      "\u001b[1mProblems:\u001b[22m  0 errors, 0 warnings",
+      "\u001b[1mTime:\u001b[22m      \u001b[1m\u001b[32m1.18 s\u001b[39m\u001b[22m",
+    ].join("\n")
+  );
+});
+
+test("stylish formatting uses singular and plural diagnostic labels", () => {
+  const cases = [
+    {
+      messages: [createFormatterMessage(2, "error")],
+      problems: "1 error, 0 warnings",
+    },
+    {
+      messages: [createFormatterMessage(1, "warning")],
+      problems: "0 errors, 1 warning",
+    },
+    {
+      messages: [
+        createFormatterMessage(2, "first error"),
+        createFormatterMessage(2, "second error"),
+        createFormatterMessage(1, "first warning"),
+        createFormatterMessage(1, "second warning"),
+      ],
+      problems: "2 errors, 2 warnings",
+    },
+  ];
+
+  for (const { messages, problems } of cases) {
+    const output = formatResults(
+      [createFormatterFile("/workspace/problem.hbs", messages)],
+      "stylish",
+      { cwd: "/workspace", elapsedMs: 10 }
+    );
+
+    assert.equal(
+      getStylishSummary(output),
+      [
+        "Files:     1 with problems, 0 clean, 1 checked",
+        `Problems:  ${problems}`,
+        "Time:      0.01 s",
+      ].join("\n")
+    );
+  }
+});
+
+test("stylish formatting reports clean and zero-match runs", () => {
+  const cleanOutput = formatResults(
+    [createFormatterFile("/workspace/clean.hbs")],
+    "stylish",
+    { cwd: "/workspace", elapsedMs: 1180 }
+  );
+  const noMatchOutput = formatResults([], "stylish", {
+    cwd: "/workspace",
+    elapsedMs: 5,
+  });
+
+  assert.equal(
+    cleanOutput,
+    [
+      "Files:     1 clean, 1 checked",
+      "Problems:  0 errors, 0 warnings",
+      "Time:      1.18 s",
+    ].join("\n")
+  );
+  assert.equal(
+    noMatchOutput,
+    [
+      "Files:     0 clean, 0 checked",
+      "Problems:  0 errors, 0 warnings",
+      "Time:      0.01 s",
+    ].join("\n")
+  );
 });
 
 test("stylish formatting preserves non-parse messages exactly", () => {
@@ -598,6 +742,29 @@ function createFormatterResult({ ruleId, message }) {
     errorCount: 1,
     warningCount: 0,
   };
+}
+
+function createFormatterFile(filePath, messages = []) {
+  return {
+    filePath,
+    messages,
+    errorCount: messages.filter(({ severity }) => severity === 2).length,
+    warningCount: messages.filter(({ severity }) => severity === 1).length,
+  };
+}
+
+function createFormatterMessage(severity, message) {
+  return {
+    ruleId: "test-rule",
+    severity,
+    line: 1,
+    column: 1,
+    message,
+  };
+}
+
+function getStylishSummary(output) {
+  return output.split("\n").slice(-3).join("\n");
 }
 
 function escapeRegExp(value) {

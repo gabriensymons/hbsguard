@@ -3,35 +3,57 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+const ANSI_FOREGROUND = {
+  green: "\u001b[32m",
+  red: "\u001b[31m",
+  reset: "\u001b[39m",
+  yellow: "\u001b[33m",
+};
+const ANSI_INTENSITY = {
+  bold: "\u001b[1m",
+  reset: "\u001b[22m",
+};
+
 function formatResults(results, format, options = {}) {
   if (format === "json") {
     return JSON.stringify(results, null, 2);
   }
 
-  return formatStylish(results, options.cwd || process.cwd());
+  return formatStylish(results, {
+    cwd: options.cwd || process.cwd(),
+    elapsedMs: options.elapsedMs || 0,
+    useColor: options.useColor === true,
+  });
 }
 
-function formatStylish(results, cwd) {
+function formatStylish(results, options) {
   const lines = [];
   let errorCount = 0;
   let warningCount = 0;
+  let problemFileCount = 0;
 
   for (const result of results) {
     if (result.messages.length === 0) {
       continue;
     }
 
+    problemFileCount += 1;
     errorCount += result.errorCount;
     warningCount += result.warningCount;
 
-    lines.push(path.relative(cwd, result.filePath) || result.filePath);
+    lines.push(path.relative(options.cwd, result.filePath) || result.filePath);
 
     for (const message of result.messages) {
       const severity = message.severity === 2 ? "error" : "warning";
+      const coloredSeverity = colorize(
+        severity,
+        message.severity === 2 ? "red" : "yellow",
+        options.useColor
+      );
       const displayMessage = formatMessage(message);
 
       lines.push(
-        `  ${message.line}:${message.column}  ${severity}  ${displayMessage}  ${message.ruleId}`
+        `  ${message.line}:${message.column}  ${coloredSeverity}  ${displayMessage}  ${message.ruleId}`
       );
 
       const contextLines = formatSourceContext(result, message);
@@ -44,20 +66,63 @@ function formatStylish(results, cwd) {
     lines.push("");
   }
 
-  if (lines.length === 0) {
-    return "";
-  }
-
-  const problemCount = errorCount + warningCount;
-  const problemLabel = problemCount === 1 ? "problem" : "problems";
   const errorLabel = errorCount === 1 ? "error" : "errors";
   const warningLabel = warningCount === 1 ? "warning" : "warnings";
+  const cleanFileCount = results.length - problemFileCount;
+  const fileParts = [];
+
+  if (problemFileCount > 0) {
+    fileParts.push(colorize(`${problemFileCount} with problems`, "red", options.useColor));
+  }
+
+  fileParts.push(
+    emphasizeStatus(
+      `${cleanFileCount} clean`,
+      "green",
+      options.useColor && cleanFileCount > 0
+    ),
+    `${results.length} checked`
+  );
 
   lines.push(
-    `✖ ${problemCount} ${problemLabel} (${errorCount} ${errorLabel}, ${warningCount} ${warningLabel})`
+    `${bold("Files:", options.useColor)}     ${fileParts.join(", ")}`,
+    `${bold("Problems:", options.useColor)}  ${emphasizeStatus(
+      `${errorCount} ${errorLabel}`,
+      "red",
+      options.useColor && errorCount > 0
+    )}, ${emphasizeStatus(
+      `${warningCount} ${warningLabel}`,
+      "yellow",
+      options.useColor && warningCount > 0
+    )}`,
+    `${bold("Time:", options.useColor)}      ${emphasizeStatus(
+      `${(options.elapsedMs / 1000).toFixed(2)} s`,
+      "green",
+      options.useColor
+    )}`
   );
 
   return lines.join("\n");
+}
+
+function colorize(value, color, enabled) {
+  if (!enabled) {
+    return value;
+  }
+
+  return `${ANSI_FOREGROUND[color]}${value}${ANSI_FOREGROUND.reset}`;
+}
+
+function bold(value, enabled) {
+  if (!enabled) {
+    return value;
+  }
+
+  return `${ANSI_INTENSITY.bold}${value}${ANSI_INTENSITY.reset}`;
+}
+
+function emphasizeStatus(value, color, enabled) {
+  return bold(colorize(value, color, enabled), enabled);
 }
 
 function formatMessage(message) {
