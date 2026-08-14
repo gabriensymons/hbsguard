@@ -10,7 +10,13 @@
   <a href="LICENSE"><img src="https://img.shields.io/npm/l/hbsguard.svg" alt="license"></a>
 </p>
 
+<p align="center">
+  <strong><a href="https://gabriensymons.github.io/hbsguard/">Try hbsguard in the Playground →</a></strong>
+</p>
+
 `hbsguard` is a standalone, read-only Handlebars linter built around plain Handlebars AST semantics. It provides a generic `recommended` preset and a Fenrir-specific preset without coupling the published package to the Fenrir repository.
+
+Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything.
 
 ## Requirements
 

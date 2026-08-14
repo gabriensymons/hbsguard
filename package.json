@@ -31,6 +31,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "build:playground": "node scripts/build-playground.js",
     "test": "node --test",
     "test:cli": "node --test test/cli.test.js",
     "test:unit": "node --test test/unit.test.js",
@@ -41,5 +42,8 @@
   },
   "dependencies": {
     "handlebars": "^4.7.8"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }
