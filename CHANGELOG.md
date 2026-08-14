@@ -2,6 +2,25 @@
 
 All notable changes to hbsguard will be documented in this file.
 
+## 0.1.1 — 2026-08-14
+
+### Added
+
+- An interactive browser Playground with recommended, empty, and custom configuration examples.
+- Available-rule helpers, live diagnostics, resolved configuration copying, and responsive light and dark themes.
+- Branded README artwork and a direct link to the Playground for GitHub and npm users.
+- Trusted npm publishing through the GitHub release workflow.
+
+### Changed
+
+- Improve stylish output with file-level status counts, elapsed time, and terminal color support.
+- Extract browser-safe text linting while preserving the existing public Node.js API.
+
+### Fixed
+
+- Handle invalid Playground configuration shapes without crashing rule insertion.
+- Report clipboard fallback failures instead of showing a false success state.
+
 ## 0.1.0 — 2026-08-06
 
 Initial release.

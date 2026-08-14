@@ -1,13 +1,13 @@
-<h1>hbsguard</h1>
-
 <p align="center">
-  <img src=".github/assets/hbsguard-logo.png" alt="hbsguard" width="394">
+  <a href="https://gabriensymons.github.io/hbsguard/">
+    <img src="https://gabriensymons.github.io/hbsguard/assets/hbsguard-logo.svg" alt="hbsguard" width="420">
+  </a>
 </p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/hbsguard"><img src="https://img.shields.io/npm/v/hbsguard.svg" alt="npm version"></a>
-  <a href="package.json"><img src="https://img.shields.io/node/v/hbsguard.svg" alt="Node.js version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/npm/l/hbsguard.svg" alt="license"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/hbsguard.svg" alt="Node.js version"></a>
+  <a href="https://github.com/gabriensymons/hbsguard/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/hbsguard.svg" alt="license"></a>
 </p>
 
 <p align="center">
