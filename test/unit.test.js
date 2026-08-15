@@ -377,7 +377,7 @@ test("stylish formatting colors complete active count-label groups", () => {
   assert.equal(
     getStylishSummary(output),
     [
-      "\u001b[1mFiles:\u001b[22m     \u001b[31m1 with problems\u001b[39m, \u001b[1m\u001b[32m1 clean\u001b[39m\u001b[22m, 2 checked",
+      "\u001b[1mFiles:\u001b[22m     \u001b[1m\u001b[31m1 with problems\u001b[39m\u001b[22m, \u001b[1m\u001b[32m1 clean\u001b[39m\u001b[22m, 2 checked",
       "\u001b[1mProblems:\u001b[22m  \u001b[1m\u001b[31m2 errors\u001b[39m\u001b[22m, \u001b[1m\u001b[33m3 warnings\u001b[39m\u001b[22m",
       "\u001b[1mTime:\u001b[22m      \u001b[1m\u001b[32m1.23 s\u001b[39m\u001b[22m",
     ].join("\n")

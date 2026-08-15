@@ -72,7 +72,9 @@ function formatStylish(results, options) {
   const fileParts = [];
 
   if (problemFileCount > 0) {
-    fileParts.push(colorize(`${problemFileCount} with problems`, "red", options.useColor));
+    fileParts.push(
+      emphasizeStatus(`${problemFileCount} with problems`, "red", options.useColor)
+    );
   }
 
   fileParts.push(

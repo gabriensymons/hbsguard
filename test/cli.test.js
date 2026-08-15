@@ -88,7 +88,10 @@ test("CLI enables standard ANSI colors for interactive TTY output", (t) => {
   assert.match(result.stdout, /\u001b\[31merror\u001b\[39m/u);
   assert.match(result.stdout, /\u001b\[33mwarning\u001b\[39m/u);
   assert.match(result.stdout, /\u001b\[1mFiles:\u001b\[22m/u);
-  assert.match(result.stdout, /\u001b\[31m1 with problems\u001b\[39m/u);
+  assert.match(
+    result.stdout,
+    /\u001b\[1m\u001b\[31m1 with problems\u001b\[39m\u001b\[22m/u
+  );
   assert.match(result.stdout, /\u001b\[1m\u001b\[32m1 clean\u001b\[39m\u001b\[22m/u);
   assert.match(result.stdout, /\u001b\[39m\u001b\[22m, 2 checked/u);
   assert.doesNotMatch(result.stdout, /\u001b\[1m2 checked/u);
