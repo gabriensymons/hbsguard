@@ -11,6 +11,14 @@
   --editor-background: #24201d;
   --editor-ink: #fff7f0;
   --editor-gutter: #9e8e82;
+  --syntax-html-tag: #ff9d72;
+  --syntax-html-attribute: #ffd18e;
+  --syntax-helper: #d1b3ff;
+  --syntax-variable: #8ed3ff;
+  --syntax-string: #b7e39b;
+  --syntax-comment: #b9a79b;
+  --syntax-keyword: #ffb86c;
+  --syntax-delimiter: #ff7b3d;
   --ink: #241d19;
   --ink-strong: #15110f;
   --muted: #6e625a;
@@ -43,6 +51,14 @@
   --editor-background: #100e0d;
   --editor-ink: #f8eee7;
   --editor-gutter: #87776c;
+  --syntax-html-tag: #ffad86;
+  --syntax-html-attribute: #ffdc9e;
+  --syntax-helper: #d7bdff;
+  --syntax-variable: #9edcff;
+  --syntax-string: #c2eaa9;
+  --syntax-comment: #a99990;
+  --syntax-keyword: #ffc27a;
+  --syntax-delimiter: #ff8249;
   --ink: #eee5df;
   --ink-strong: #fffaf6;
   --muted: #b7a89e;
@@ -401,55 +417,67 @@ select {
 
 .editor-shell {
   position: relative;
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
   min-height: 240px;
   overflow: hidden;
   background: var(--editor-background);
 }
 
-.line-numbers-viewport {
-  position: relative;
-  overflow: hidden;
-  border-right: 1px solid color-mix(in srgb, var(--editor-gutter) 24%, transparent);
-  background: color-mix(in srgb, var(--editor-background) 92%, #000000);
+#source-editor,
+#source-editor .cm-editor {
+  height: 240px;
+  min-width: 0;
 }
 
-#line-numbers {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  padding: 21px 12px;
-  color: var(--editor-gutter);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  line-height: 1.72;
-  text-align: right;
-  user-select: none;
-}
-
-#source-editor {
-  width: 100%;
-  min-height: 240px;
-  resize: none;
-  padding: 20px 22px;
-  border: 0;
-  outline: 0;
+#source-editor .cm-editor {
   color: var(--editor-ink);
   background: var(--editor-background);
-  caret-color: var(--accent);
   font-family: var(--font-mono);
   font-size: 14px;
   font-variant-ligatures: none;
   line-height: 1.72;
-  tab-size: 2;
-  white-space: pre;
 }
 
-#source-editor::selection,
+#source-editor .cm-scroller {
+  overflow: auto;
+  font-family: inherit;
+}
+
+#source-editor .cm-content {
+  min-width: max-content;
+  padding: 20px 0;
+  caret-color: var(--accent);
+  tab-size: 2;
+}
+
+#source-editor .cm-line {
+  padding: 0 22px;
+}
+
+#source-editor .cm-gutters {
+  border-right: 1px solid color-mix(in srgb, var(--editor-gutter) 24%, transparent);
+  color: var(--editor-gutter);
+  background: color-mix(in srgb, var(--editor-background) 92%, #000000);
+}
+
+#source-editor .cm-activeLine,
+#source-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+#source-editor .cm-cursor {
+  border-left-color: var(--accent);
+}
+
+#source-editor .cm-selectionBackground,
+#source-editor .cm-content ::selection,
 .config-editor::selection {
   color: #fff;
-  background: color-mix(in srgb, var(--accent) 70%, #000);
+  background: color-mix(in srgb, var(--accent) 52%, #000) !important;
+}
+
+#source-editor .cm-focused {
+  outline: 3px solid color-mix(in srgb, var(--accent) 58%, transparent);
+  outline-offset: -3px;
 }
 
 .problems-section {
@@ -618,6 +646,12 @@ select {
   font-weight: 800;
 }
 
+.error-state-mark {
+  border-color: color-mix(in srgb, var(--danger) 38%, transparent);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
 .empty-state h3 {
   margin: 0 0 5px;
   color: var(--ink-strong);
@@ -727,11 +761,6 @@ select {
   background: var(--accent-soft);
 }
 
-.available-rule:disabled {
-  cursor: default;
-  opacity: 0.62;
-}
-
 .available-rule-content {
   display: grid;
   min-width: 0;
@@ -767,6 +796,8 @@ select {
   font-family: var(--font-mono);
   font-size: 15px;
   font-weight: 800;
+  line-height: 1;
+  padding-top: 1px;
 }
 
 .available-rule.is-added .available-rule-action {
@@ -790,7 +821,7 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-small);
@@ -860,6 +891,8 @@ select {
   color: var(--accent-ink);
   background: var(--accent);
   font-weight: 900;
+  line-height: 1;
+  padding-top: 1px;
 }
 
 .privacy-note strong {
@@ -989,20 +1022,20 @@ footer a:hover {
   }
 
   .editor-shell {
-    grid-template-columns: 42px minmax(0, 1fr);
     min-height: 360px;
   }
 
-  #line-numbers {
-    padding-right: 9px;
-    padding-left: 5px;
+  #source-editor,
+  #source-editor .cm-editor {
+    height: 360px;
+  }
+
+  #source-editor .cm-editor {
     font-size: 12px;
   }
 
-  #source-editor {
-    min-height: 360px;
-    padding: 20px 14px;
-    font-size: 12px;
+  #source-editor .cm-line {
+    padding: 0 14px;
   }
 
   .configuration-panel {

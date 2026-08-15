@@ -2,7 +2,9 @@
 
 const { lintExample, resolvePlaygroundConfig } = require("./browser-api");
 const { EXAMPLES } = require("./examples");
-const { addRuleOverride, RULE_REFERENCE } = require("./rule-reference");
+const { RULE_REFERENCE, toggleRuleOverride } = require("./rule-reference");
+const { createSourceEditor, offsetFromLocation } = require("./source-editor");
+const { getRuleTogglePresentation, resolveExamplePreset } = require("./app-state");
 
 const elements = {
   availableRules: document.querySelector("#available-rules"),
@@ -13,7 +15,6 @@ const elements = {
   diagnosticsList: document.querySelector("#diagnostics-list"),
   exampleSelect: document.querySelector("#example-select"),
   fileName: document.querySelector("#editor-heading"),
-  lineNumbers: document.querySelector("#line-numbers"),
   presetSelect: document.querySelector("#preset-select"),
   resetButton: document.querySelector("#reset-button"),
   resolvedConfig: document.querySelector("#resolved-config-output"),
@@ -25,14 +26,20 @@ const elements = {
 
 let activeExample = EXAMPLES[0];
 let copyResetTimer;
+let editor;
 let lintFrame;
 
 function initialize() {
   populateExamples();
   populateAvailableRules();
   initializeTheme();
+  editor = createSourceEditor({
+    parent: elements.sourceEditor,
+    initialValue: activeExample.source,
+    onChange: scheduleLint,
+  });
   bindEvents();
-  loadExample(activeExample);
+  loadExample(activeExample, { useExamplePreset: true });
 }
 
 function populateExamples() {
@@ -51,7 +58,7 @@ function populateAvailableRules() {
     button.className = "available-rule";
     button.dataset.ruleId = rule.id;
     button.setAttribute("aria-label", `Add ${rule.id} as a warning override`);
-    button.addEventListener("click", () => addAvailableRule(rule.id));
+    button.addEventListener("click", () => toggleAvailableRule(rule.id));
 
     const content = document.createElement("span");
     content.className = "available-rule-content";
@@ -83,27 +90,23 @@ function bindEvents() {
   });
 
   elements.presetSelect.addEventListener("change", scheduleLint);
-  elements.sourceEditor.addEventListener("input", () => {
-    updateLineNumbers();
-    scheduleLint();
-  });
-  elements.sourceEditor.addEventListener("scroll", syncLineNumbers);
   elements.configEditor.addEventListener("input", scheduleLint);
   elements.copyConfigButton.addEventListener("click", copyResolvedConfig);
   elements.resetButton.addEventListener("click", () => loadExample(activeExample));
   elements.themeToggle.addEventListener("click", toggleTheme);
 }
 
-function loadExample(example) {
+function loadExample(example, { useExamplePreset = false } = {}) {
   activeExample = example;
   elements.exampleSelect.value = example.id;
-  elements.presetSelect.value = example.preset;
-  elements.sourceEditor.value = example.source;
+  elements.presetSelect.value = resolveExamplePreset({
+    currentPreset: elements.presetSelect.value,
+    examplePreset: example.preset,
+    useExamplePreset,
+  });
+  editor.setValue(example.source);
   elements.configEditor.value = '{\n  "rules": {}\n}';
   elements.fileName.textContent = example.fileName;
-  elements.sourceEditor.scrollTop = 0;
-  updateLineNumbers();
-  syncLineNumbers();
   lintNow();
 }
 
@@ -128,7 +131,7 @@ function lintNow() {
 
   try {
     const preset = elements.presetSelect.value;
-    const result = lintExample(elements.sourceEditor.value, {
+    const result = lintExample(editor.getValue(), {
       preset,
       config: overrides,
       filePath: activeExample.fileName,
@@ -143,12 +146,12 @@ function lintNow() {
   }
 }
 
-function addAvailableRule(ruleId) {
+function toggleAvailableRule(ruleId) {
   let nextConfig;
 
   try {
     const config = JSON.parse(elements.configEditor.value);
-    nextConfig = addRuleOverride(config, ruleId);
+    nextConfig = toggleRuleOverride(config, ruleId);
   } catch {
     setConfigValidity(false, "Fix config first");
     elements.configEditor.focus();
@@ -167,15 +170,10 @@ function updateAvailableRules(config) {
     const added = Object.prototype.hasOwnProperty.call(overrides, button.dataset.ruleId);
     const action = button.querySelector(".available-rule-action");
 
-    button.disabled = added;
     button.classList.toggle("is-added", added);
-    button.setAttribute(
-      "aria-label",
-      added
-        ? `${button.dataset.ruleId} is already in rule overrides`
-        : `Add ${button.dataset.ruleId} as a warning override`
-    );
-    action.textContent = added ? "✓" : "+";
+    const presentation = getRuleTogglePresentation(button.dataset.ruleId, added);
+    button.setAttribute("aria-label", presentation.label);
+    action.textContent = presentation.mark;
   }
 }
 
@@ -247,16 +245,13 @@ function createDiagnostic(message) {
 }
 
 function selectDiagnostic(message) {
-  const lines = elements.sourceEditor.value.split("\n");
-  const precedingText = lines.slice(0, Math.max(0, message.line - 1)).join("\n");
-  const lineStart = precedingText.length + (message.line > 1 ? 1 : 0);
-  const start = Math.min(
-    elements.sourceEditor.value.length,
-    lineStart + Math.max(0, message.column - 1)
-  );
+  const value = editor.getValue();
+  const start = offsetFromLocation(value, message.line, message.column);
 
-  elements.sourceEditor.focus();
-  elements.sourceEditor.setSelectionRange(start, Math.min(start + 1, elements.sourceEditor.value.length));
+  editor.focus();
+  editor.selectRange(start, Math.min(start + 1, value.replace(/\r\n?/gu, "\n").length), {
+    scrollIntoView: true,
+  });
 }
 
 function renderSummary(errorCount, warningCount) {
@@ -298,6 +293,7 @@ function renderConfigError(message) {
   const content = document.createElement("div");
   const mark = document.createElement("span");
   mark.className = "empty-state-mark";
+  mark.classList.add("error-state-mark");
   mark.setAttribute("aria-hidden", "true");
   mark.textContent = "!";
 
@@ -371,14 +367,6 @@ function resetCopyButton() {
   elements.copyConfigLabel.textContent = "Copy";
 }
 
-function updateLineNumbers() {
-  const lineCount = Math.max(1, elements.sourceEditor.value.split("\n").length);
-  elements.lineNumbers.textContent = Array.from({ length: lineCount }, (_, index) => index + 1).join("\n");
-}
-
-function syncLineNumbers() {
-  elements.lineNumbers.style.transform = `translateY(${-elements.sourceEditor.scrollTop}px)`;
-}
 
 function initializeTheme() {
   const storedTheme = readStoredTheme();

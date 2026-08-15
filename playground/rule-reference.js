@@ -53,7 +53,29 @@ function addRuleOverride(config, ruleId) {
   };
 }
 
+function toggleRuleOverride(config, ruleId) {
+  if (!config || typeof config !== "object" || Array.isArray(config)) {
+    throw new Error("Playground config must be an object.");
+  }
+
+  if (!RULE_REFERENCE.some((rule) => rule.id === ruleId)) {
+    throw new Error(`Unknown rule "${ruleId}".`);
+  }
+
+  const rules = { ...(config.rules || {}) };
+  if (!Object.prototype.hasOwnProperty.call(rules, ruleId)) {
+    return addRuleOverride(config, ruleId);
+  }
+
+  delete rules[ruleId];
+  return {
+    ...config,
+    rules,
+  };
+}
+
 module.exports = {
   addRuleOverride,
   RULE_REFERENCE,
+  toggleRuleOverride,
 };

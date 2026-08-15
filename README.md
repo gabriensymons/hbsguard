@@ -190,7 +190,12 @@ This API provides an integration seam for external harnesses and private corpus 
 ```bash
 npm install
 npm test
+npm run build:grammar
+npm run build:playground
 npm pack --dry-run --json
 ```
+
+`build:grammar` regenerates the committed hbsguard-owned Handlebars parser.
+`build:playground` runs that generation step before producing the static site.
 
 The project intentionally remains read-only for its initial release; fix mode is deferred until lint behavior is stable across existing template corpora.

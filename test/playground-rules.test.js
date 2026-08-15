@@ -4,7 +4,11 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 
 const rules = require("../src/rules");
-const { addRuleOverride, RULE_REFERENCE } = require("../playground/rule-reference");
+const {
+  addRuleOverride,
+  RULE_REFERENCE,
+  toggleRuleOverride,
+} = require("../playground/rule-reference");
 
 test("Playground rule reference covers every hbsguard rule", () => {
   assert.deepEqual(
@@ -28,6 +32,24 @@ test("addRuleOverride adds a warning override without mutating the input", () =>
     },
   });
   assert.deepEqual(config, { rules: { "eol-last": "off" } });
+});
+
+test("toggleRuleOverride removes an authored override without mutating other config", () => {
+  const config = {
+    extends: ["recommended"],
+    rules: {
+      indentation: ["error", 4],
+      "mustache-spacing": "warn",
+    },
+  };
+
+  assert.deepEqual(toggleRuleOverride(config, "indentation"), {
+    extends: ["recommended"],
+    rules: {
+      "mustache-spacing": "warn",
+    },
+  });
+  assert.deepEqual(config.rules.indentation, ["error", 4]);
 });
 
 test("addRuleOverride rejects unknown rules", () => {

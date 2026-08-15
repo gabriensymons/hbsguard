@@ -1,0 +1,5 @@
+{
+  "name": "@hbsguard/codemirror-lang-handlebars-internal",
+  "private": true,
+  "type": "module"
+}

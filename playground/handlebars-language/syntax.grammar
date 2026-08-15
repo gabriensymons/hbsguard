@@ -1,0 +1,154 @@
+@precedence { pathSuffix @left }
+
+@top Template { templateItem* }
+
+templateItem { LongComment | Comment | RawBlock | Decorator | Block | PartialBlock | Partial | TripleMustache | Mustache | HtmlText }
+
+LongComment { (WhitespaceLongCommentOpen | LongCommentOpen) LongCommentText? (WhitespaceLongCommentClose | LongCommentClose) }
+Comment { (WhitespaceCommentOpen | CommentOpen) InlineCommentText? (WhitespaceCommentClose | CloseDelimiter) }
+RawBlock { RawBlockOpen RawText* RawBlockClose }
+RawBlockOpen { RawOpenDelimiter RawBlockOpenContent }
+RawBlockClose { RawOpenDelimiter RawBlockCloseContent }
+Decorator { OpenDelimiter DecoratorContent }
+Block { BlockOpen templateItem* (ElseClause templateItem*)? BlockClose }
+BlockOpen { OpenDelimiter BlockOpenContent }
+ElseClause { OpenDelimiter ElseClauseContent }
+PartialBlock { PartialBlockOpen templateItem* BlockClose }
+PartialBlockOpen { OpenDelimiter PartialBlockOpenContent }
+BlockClose { OpenDelimiter BlockCloseContent }
+Partial { OpenDelimiter PartialContent }
+Mustache { OpenDelimiter MustacheContent }
+TripleMustache { OpenDelimiter TripleMustacheContent }
+HtmlText { PlainHtmlText | EscapedHandlebars | BackslashText | Backslash }
+
+@skip { space } {
+  MustacheContent { WhitespaceControl? UnescapedMarker? Expression WhitespaceControl? CloseDelimiter }
+  RawBlockOpenContent { Expression RawCloseDelimiter }
+  RawBlockCloseContent { CloseMarker Path RawCloseDelimiter }
+  DecoratorContent { WhitespaceControl? DecoratorMarker Expression WhitespaceControl? CloseDelimiter }
+  BlockOpenContent { WhitespaceControl? (DecoratorBlockMarker | BlockMarker | InverseMarker) Expression WhitespaceControl? CloseDelimiter }
+  ElseClauseContent { WhitespaceControl? (ElseKeyword Expression? | InverseMarker) WhitespaceControl? CloseDelimiter }
+  PartialContent { WhitespaceControl? PartialMarker PartialName Argument* WhitespaceControl? CloseDelimiter }
+  PartialBlockOpenContent { WhitespaceControl? PartialBlockMarker PartialName Argument* BlockParams? WhitespaceControl? CloseDelimiter }
+  BlockCloseContent { WhitespaceControl? CloseMarker Path WhitespaceControl? CloseDelimiter }
+  PartialName { Path | Subexpression }
+  TripleMustacheContent { WhitespaceControl? TripleOpenDelimiter Expression TripleCloseDelimiter WhitespaceControl? CloseDelimiter }
+  Expression { Callee Argument* BlockParams? }
+  Callee { Path | Subexpression | Literal }
+  Argument { HashPair | Value }
+  Value { Path | Subexpression | Literal }
+  HashPair { HashKey Equals Value }
+  HashKey { PathSegment }
+  Subexpression { OpenParen Expression CloseParen }
+  BlockParams { AsKeyword Pipe BlockParamName+ Pipe }
+  BlockParamName { PathSegment }
+
+  Path {
+    ParentReference+ PathSegment (!pathSuffix PathSuffix)* |
+    CurrentReference PathSegment (!pathSuffix PathSuffix)* |
+    DataVariable (!pathSuffix PathSuffix)* |
+    ThisKeyword (!pathSuffix PathSuffix)* |
+    BracketPath (!pathSuffix PathSuffix)* |
+    Dot |
+    PathSegment (!pathSuffix PathSuffix)*
+  }
+  PathSuffix { DotPathSegment | DotBracketPathSegment | Slash (PathSegment | BracketPath) | BracketPath }
+  BracketPath { BracketPathSegment }
+  DataVariable { At PathSegment }
+  PathSegment { RegularPathSegment | DigitPathSegment }
+
+  Literal { String | Number | Boolean | Null | Undefined }
+  String { DoubleQuotedString | SingleQuotedString }
+  Number { NumberLiteral }
+  Boolean { BooleanLiteral }
+  Null { NullLiteral }
+  Undefined { UndefinedLiteral }
+}
+
+@tokens {
+  RawOpenDelimiter { "{{{{" }
+  RawCloseDelimiter { "}}}}" }
+  WhitespaceLongCommentOpen { "{{~!--" }
+  WhitespaceLongCommentClose { "--~}}" }
+  LongCommentOpen { "{{!--" }
+  LongCommentClose { "--}}" }
+  WhitespaceCommentOpen { "{{~!" }
+  WhitespaceCommentClose { "~}}" }
+  CommentOpen { "{{!" }
+  TripleOpenDelimiter { "{" }
+  TripleCloseDelimiter { "}" }
+  OpenDelimiter { "{{" }
+  CloseDelimiter { "}}" }
+  WhitespaceControl { "~" }
+  UnescapedMarker { "&" }
+  PartialMarker { ">" }
+  PartialBlockMarker { "#>" }
+  DecoratorBlockMarker { "#*" }
+  DecoratorMarker { "*" }
+  BlockMarker { "#" }
+  ElseKeyword { "else" }
+  InverseMarker { "^" }
+  CloseMarker { "/" }
+  ParentReference { "../" }
+  CurrentReference { "./" }
+  DotPathSegment { "." (![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~0-9] ![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~]* | $[0-9]+ ![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~0-9] ![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~]*) }
+  DotBracketPathSegment { "." "[" ![\]]+ "]" }
+  Dot { "." }
+  Slash { "/" }
+  At { "@" }
+
+  Equals { "=" }
+  OpenParen { "(" }
+  CloseParen { ")" }
+  Pipe { "|" }
+  AsKeyword { "as" }
+  ThisKeyword { "this" }
+  BooleanLiteral { "true" | "false" }
+  NullLiteral { "null" }
+  UndefinedLiteral { "undefined" }
+  NumberLiteral { "-"? $[0-9]+ ("." $[0-9]+)? }
+  DoubleQuotedString { "\"" (!["\\] | "\\" _)* "\"" }
+  SingleQuotedString { "'" (!['\\] | "\\" _)* "'" }
+  RegularPathSegment { ![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~0-9] ![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~]* }
+  DigitPathSegment { $[0-9]+ ![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~0-9] ![ \t\n\r!"#%&'()*+,./;<=>@[\\\]^`{|}~]* }
+  BracketPathSegment { "[" ![\]]+ "]" }
+  space { $[ \t\n\r]+ }
+  PlainHtmlText { (![\\{}] | "{" ![{] | "}")+ }
+  EscapedHandlebars { "\\{{" (![}] | "}" ![}])* "}}" }
+  BackslashText { "\\" "\\"+ }
+  Backslash { "\\" }
+  InlineCommentText { (![}~] | "}" ![}] | "~" ![}])+ }
+  LongCommentText { (![-] | "-" ![-] | "--" ![}~] | "--}" ![}] | "--~" ![}] | "--~}" ![}])+ }
+  RawText { (![{] | "{" ![{] | "{{" ![{] | "{{{" ![{])+ }
+
+  @precedence {
+    RawOpenDelimiter,
+    WhitespaceLongCommentOpen,
+    LongCommentOpen,
+    WhitespaceCommentOpen,
+    CommentOpen,
+    DecoratorBlockMarker,
+    BlockMarker,
+    TripleOpenDelimiter,
+    OpenDelimiter,
+    DotPathSegment,
+    DotBracketPathSegment,
+    Dot,
+    WhitespaceLongCommentClose,
+    LongCommentText,
+    WhitespaceCommentClose,
+    InlineCommentText,
+    EscapedHandlebars,
+    BackslashText,
+    Backslash,
+    ElseKeyword,
+    AsKeyword,
+    ThisKeyword,
+    BooleanLiteral,
+    NullLiteral,
+    UndefinedLiteral,
+    DigitPathSegment,
+    NumberLiteral,
+    RegularPathSegment
+  }
+}
