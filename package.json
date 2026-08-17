@@ -33,6 +33,7 @@
   "scripts": {
     "build:grammar": "node scripts/build-handlebars-grammar.js",
     "build:playground": "npm run build:grammar && node scripts/build-playground.js",
+    "preview:stylish": "node scripts/preview-stylish.js",
     "test": "node --test",
     "test:cli": "node --test test/cli.test.js",
     "test:unit": "node --test test/unit.test.js",

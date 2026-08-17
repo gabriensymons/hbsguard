@@ -10,6 +10,13 @@ const test = require("node:test");
 const { runCli: runCliInProcess } = require("../src/cli");
 
 const BIN_PATH = path.resolve(__dirname, "..", "bin", "hbsguard.js");
+const NPM_COMMAND = process.platform === "win32" ? "npm.cmd" : "npm";
+const SUMMARY_PREVIEW_PATH = path.resolve(
+  __dirname,
+  "..",
+  "scripts",
+  "preview-stylish-summary.js"
+);
 
 test("CLI emits stylish output and exits nonzero for lint errors", (t) => {
   const workspace = createWorkspace(
@@ -59,6 +66,50 @@ test("CLI reports injectable elapsed time for a clean run", (t) => {
       "",
     ].join("\n")
   );
+});
+
+test("stylish summary preview renders representative problem counts", () => {
+  const result = spawnSync(process.execPath, [SUMMARY_PREVIEW_PATH], {
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "" },
+  });
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, "");
+  assert.equal(
+    result.stdout,
+    [
+      "Files:     406 with problems, 508 clean, 914 checked",
+      "Problems:  797 errors, 0 warnings",
+      "Time:      2.05 s",
+      "",
+    ].join("\n")
+  );
+});
+
+test("npm preview:stylish shows clean and problem summaries", () => {
+  const result = spawnSync(NPM_COMMAND, ["run", "preview:stylish", "--silent"], {
+    cwd: path.resolve(__dirname, ".."),
+    encoding: "utf8",
+    env: { ...process.env, NO_COLOR: "" },
+  });
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, "");
+  const lines = result.stdout.trimEnd().split("\n");
+  assert.deepEqual(lines.slice(0, 3), [
+    "=== Clean fixture preview ===",
+    "Files:     6 clean, 6 checked",
+    "Problems:  0 errors, 0 warnings",
+  ]);
+  assert.match(lines[3], /^Time:      \d+\.\d{2} s$/u);
+  assert.equal(lines[4], "");
+  assert.deepEqual(lines.slice(5), [
+    "=== Problem summary preview ===",
+    "Files:     406 with problems, 508 clean, 914 checked",
+    "Problems:  797 errors, 0 warnings",
+    "Time:      2.05 s",
+  ]);
 });
 
 test("CLI enables standard ANSI colors for interactive TTY output", (t) => {
