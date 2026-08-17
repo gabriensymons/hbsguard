@@ -192,10 +192,12 @@ npm install
 npm test
 npm run build:grammar
 npm run build:playground
+npm run preview:stylish
 npm pack --dry-run --json
 ```
 
 `build:grammar` regenerates the committed hbsguard-owned Handlebars parser.
 `build:playground` runs that generation step before producing the static site.
+`preview:stylish` renders clean and representative problem summaries for visually checking terminal formatting. Use `NO_COLOR=1 npm run preview:stylish` to compare the plain-text output.
 
 The project intentionally remains read-only for its initial release; fix mode is deferred until lint behavior is stable across existing template corpora.
