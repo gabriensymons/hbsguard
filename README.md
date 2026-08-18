@@ -1,11 +1,5 @@
 <p align="center">
   <a href="https://gabriensymons.github.io/hbsguard/">
-    <img src="https://gabriensymons.github.io/hbsguard/assets/hbsguard-logo.svg" alt="hbsguard" width="420">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://gabriensymons.github.io/hbsguard/">
     <picture>
       <source
         media="(prefers-color-scheme: dark)"
@@ -22,6 +16,16 @@
       >
     </picture>
   </a>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/hbsguard"><img src="https://img.shields.io/npm/v/hbsguard.svg" alt="npm version"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/hbsguard.svg" alt="Node.js version"></a>
+  <a href="https://github.com/gabriensymons/hbsguard/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/hbsguard.svg" alt="license"></a>
+</p>
+
+<p align="center">
+  <strong><a href="https://gabriensymons.github.io/hbsguard/">Try hbsguard in the Playground →</a></strong>
 </p>
 
 `hbsguard` is a standalone, read-only Handlebars linter built around plain Handlebars AST semantics. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
