@@ -38,7 +38,7 @@ test("CLI emits stylish output and exits nonzero for lint errors", (t) => {
   assert.match(result.stdout, /partial-spacing/u);
   assert.match(
     result.stdout,
-    /Files:     1 with problems, 0 clean, 1 checked\nProblems:  1 error, 0 warnings\nTime:      \d+\.\d{2} s\n$/u
+    /Files:     1 with problems, 0 clean, 1 checked\nProblems:  1 error, 0 warnings\nRules:     1  partial-spacing\nTime:      \d+\.\d{2} s\n$/u
   );
   assert.doesNotMatch(result.stdout, /\u001b\[/u);
 });
@@ -79,9 +79,12 @@ test("stylish summary preview renders representative problem counts", () => {
   assert.equal(
     result.stdout,
     [
-      "Files:     406 with problems, 508 clean, 914 checked",
-      "Problems:  797 errors, 0 warnings",
-      "Time:      2.05 s",
+      "Files:     398 with problems, 531 clean, 929 checked",
+      "Problems:  786 errors, 0 warnings",
+      "Rules:     429  mustache-spacing",
+      "           239  no-trailing-spaces",
+      "           118  eol-last",
+      "Time:      1.90 s",
       "",
     ].join("\n")
   );
@@ -106,9 +109,12 @@ test("npm preview:stylish shows clean and problem summaries", () => {
   assert.equal(lines[4], "");
   assert.deepEqual(lines.slice(5), [
     "=== Problem summary preview ===",
-    "Files:     406 with problems, 508 clean, 914 checked",
-    "Problems:  797 errors, 0 warnings",
-    "Time:      2.05 s",
+    "Files:     398 with problems, 531 clean, 929 checked",
+    "Problems:  786 errors, 0 warnings",
+    "Rules:     429  mustache-spacing",
+    "           239  no-trailing-spaces",
+    "           118  eol-last",
+    "Time:      1.90 s",
   ]);
 });
 
@@ -309,7 +315,7 @@ test("CLI quiet mode suppresses warnings in formatter output", (t) => {
   assert.doesNotMatch(result.stdout, /eol-last/u);
   assert.match(
     result.stdout,
-    /Files:     1 with problems, 0 clean, 1 checked\nProblems:  1 error, 0 warnings\nTime:      \d+\.\d{2} s\n$/u
+    /Files:     1 with problems, 0 clean, 1 checked\nProblems:  1 error, 0 warnings\nRules:     1  no-trailing-spaces\nTime:      \d+\.\d{2} s\n$/u
   );
 });
 
@@ -340,9 +346,10 @@ test("CLI quiet mode treats warning-only files as clean in the visible summary",
     result.stdout,
     /^Files:     1 clean, 1 checked\nProblems:  0 errors, 0 warnings\nTime:      \d+\.\d{2} s\n$/u
   );
-  assert.doesNotMatch(result.stdout, /eol-last/u);
+  assert.doesNotMatch(result.stdout, /eol-last|Rules:/u);
   assert.equal(limitedResult.status, 1);
   assert.match(limitedResult.stderr, /exceeds the configured maximum/u);
+  assert.doesNotMatch(limitedResult.stdout, /Rules:/u);
   assert.match(
     limitedResult.stdout,
     /^Files:     1 clean, 1 checked\nProblems:  0 errors, 0 warnings\nTime:      \d+\.\d{2} s\n$/u
@@ -372,7 +379,7 @@ test("CLI exits nonzero on parse errors", (t) => {
   assert.match(result.stdout, /\n\s+\|\s+ {8}\^/u);
   assert.match(
     result.stdout,
-    /parse-error[\s\S]*Files:     1 with problems, 0 clean, 1 checked\nProblems:  2 errors, 0 warnings\nTime:      \d+\.\d{2} s\n$/u
+    /parse-error[\s\S]*Files:     1 with problems, 0 clean, 1 checked\nProblems:  2 errors, 0 warnings\nRules:     1  no-invalid-bracket-path\n           1  parse-error\nTime:      \d+\.\d{2} s\n$/u
   );
 });
 

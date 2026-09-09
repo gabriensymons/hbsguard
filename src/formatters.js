@@ -31,6 +31,7 @@ function formatStylish(results, options) {
   let errorCount = 0;
   let warningCount = 0;
   let problemFileCount = 0;
+  const ruleCounts = new Map();
 
   for (const result of results) {
     if (result.messages.length === 0) {
@@ -44,6 +45,8 @@ function formatStylish(results, options) {
     lines.push(path.relative(options.cwd, result.filePath) || result.filePath);
 
     for (const message of result.messages) {
+      ruleCounts.set(message.ruleId, (ruleCounts.get(message.ruleId) || 0) + 1);
+
       const severity = message.severity === 2 ? "error" : "warning";
       const coloredSeverity = colorize(
         severity,
@@ -96,7 +99,26 @@ function formatStylish(results, options) {
       `${warningCount} ${warningLabel}`,
       "yellow",
       options.useColor && warningCount > 0
-    )}`,
+    )}`
+  );
+
+  if (ruleCounts.size > 0) {
+    const sortedRuleCounts = [...ruleCounts.entries()].sort(
+      ([firstRule, firstCount], [secondRule, secondCount]) =>
+        secondCount - firstCount || String(firstRule).localeCompare(String(secondRule))
+    );
+    const countWidth = Math.max(
+      ...sortedRuleCounts.map(([, count]) => String(count).length)
+    );
+
+    for (const [index, [ruleId, count]] of sortedRuleCounts.entries()) {
+      const label = index === 0 ? `${bold("Rules:", options.useColor)}     ` : "           ";
+
+      lines.push(`${label}${String(count).padStart(countWidth, " ")}  ${ruleId}`);
+    }
+  }
+
+  lines.push(
     `${bold("Time:", options.useColor)}      ${emphasizeStatus(
       `${(options.elapsedMs / 1000).toFixed(2)} s`,
       "green",

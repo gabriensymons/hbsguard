@@ -2,6 +2,12 @@
 
 All notable changes to hbsguard will be documented in this file.
 
+## 0.3.0 — 2026-09-09
+
+### Added
+
+- Add a sorted rule-count breakdown to problem summaries in the `stylish` formatter while leaving clean and JSON output unchanged.
+
 ## 0.2.0 — 2026-08-14
 
 ### Changed

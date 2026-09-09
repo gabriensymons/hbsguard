@@ -349,6 +349,7 @@ test("stylish formatting reports aligned file, problem, and elapsed-time totals"
     [
       "Files:     2 with problems, 1 clean, 3 checked",
       "Problems:  1 error, 2 warnings",
+      "Rules:     3  test-rule",
       "Time:      1.23 s",
     ].join("\n")
   );
@@ -379,6 +380,7 @@ test("stylish formatting colors complete active count-label groups", () => {
     [
       "\u001b[1mFiles:\u001b[22m     \u001b[1m\u001b[31m1 with problems\u001b[39m\u001b[22m, \u001b[1m\u001b[32m1 clean\u001b[39m\u001b[22m, 2 checked",
       "\u001b[1mProblems:\u001b[22m  \u001b[1m\u001b[31m2 errors\u001b[39m\u001b[22m, \u001b[1m\u001b[33m3 warnings\u001b[39m\u001b[22m",
+      "\u001b[1mRules:\u001b[22m     5  test-rule",
       "\u001b[1mTime:\u001b[22m      \u001b[1m\u001b[32m1.23 s\u001b[39m\u001b[22m",
     ].join("\n")
   );
@@ -434,10 +436,42 @@ test("stylish formatting uses singular and plural diagnostic labels", () => {
       [
         "Files:     1 with problems, 0 clean, 1 checked",
         `Problems:  ${problems}`,
+        `Rules:     ${messages.length}  test-rule`,
         "Time:      0.01 s",
       ].join("\n")
     );
   }
+});
+
+test("stylish formatting sorts and aligns rule counts", () => {
+  const messages = [
+    ...Array.from({ length: 12 }, (_, index) =>
+      createFormatterMessage(2, `many error ${index + 1}`, "many-rule")
+    ),
+    createFormatterMessage(2, "first alpha error", "alpha-rule"),
+    createFormatterMessage(2, "second alpha error", "alpha-rule"),
+    createFormatterMessage(2, "first zeta error", "zeta-rule"),
+    createFormatterMessage(2, "second zeta error", "zeta-rule"),
+    createFormatterMessage(2, "parse error", "parse-error"),
+  ];
+  const output = formatResults(
+    [createFormatterFile("/workspace/problem.hbs", messages)],
+    "stylish",
+    { cwd: "/workspace", elapsedMs: 10 }
+  );
+
+  assert.equal(
+    getStylishSummary(output),
+    [
+      "Files:     1 with problems, 0 clean, 1 checked",
+      "Problems:  17 errors, 0 warnings",
+      "Rules:     12  many-rule",
+      "            2  alpha-rule",
+      "            2  zeta-rule",
+      "            1  parse-error",
+      "Time:      0.01 s",
+    ].join("\n")
+  );
 });
 
 test("stylish formatting reports clean and zero-match runs", () => {
@@ -753,9 +787,9 @@ function createFormatterFile(filePath, messages = []) {
   };
 }
 
-function createFormatterMessage(severity, message) {
+function createFormatterMessage(severity, message, ruleId = "test-rule") {
   return {
-    ruleId: "test-rule",
+    ruleId,
     severity,
     line: 1,
     column: 1,
@@ -764,7 +798,10 @@ function createFormatterMessage(severity, message) {
 }
 
 function getStylishSummary(output) {
-  return output.split("\n").slice(-3).join("\n");
+  const lines = output.split("\n");
+  const summaryIndex = lines.findLastIndex((line) => line.includes("Files:"));
+
+  return lines.slice(summaryIndex).join("\n");
 }
 
 function escapeRegExp(value) {

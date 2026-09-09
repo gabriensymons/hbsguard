@@ -85,6 +85,21 @@ Options:
 - `--quiet`: suppress warnings in formatter output
 - `-h`, `--help`: show help
 
+### Stylish summary
+
+The default `stylish` formatter ends with file and problem totals, a count for each rule with visible findings, and elapsed time:
+
+```text
+Files:     398 with problems, 531 clean, 929 checked
+Problems:  786 errors, 0 warnings
+Rules:     429  mustache-spacing
+           239  no-trailing-spaces
+           118  eol-last
+Time:      1.90 s
+```
+
+Rule counts are sorted from highest to lowest, with alphabetical ordering for ties. The `Rules:` section is omitted when a run has no visible findings. Use `--format json` for machine-readable diagnostics.
+
 Autofix is not supported in v1. Passing `--fix` exits with an error without modifying files.
 
 ### Exit codes
