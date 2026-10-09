@@ -310,8 +310,22 @@ h1 {
 }
 
 .control {
+  position: relative;
   display: grid;
   gap: 5px;
+}
+
+.control::after {
+  position: absolute;
+  right: 14px;
+  bottom: 20px;
+  width: 7px;
+  height: 7px;
+  border: solid var(--muted);
+  border-width: 0 1.5px 1.5px 0;
+  content: "";
+  pointer-events: none;
+  transform: rotate(45deg);
 }
 
 .control > span {
@@ -331,6 +345,7 @@ select,
 }
 
 select {
+  appearance: none;
   width: 100%;
   padding: 0 38px 0 12px;
   color: var(--ink-strong);
@@ -346,10 +361,44 @@ select {
   font-weight: 700;
 }
 
-.secondary-button:hover {
+.secondary-button:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent-strong);
   background: var(--accent-soft);
+}
+
+.secondary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fix-controls {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.fix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fix-button {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.fix-controls p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fix-controls .fix-status {
+  color: var(--ink-strong);
 }
 
 .workspace {
@@ -366,7 +415,7 @@ select {
 
 .editor-panel {
   display: grid;
-  grid-template-rows: 64px 240px auto;
+  grid-template-rows: 64px 240px auto auto;
   border-right: 1px solid var(--border);
 }
 
@@ -1009,7 +1058,7 @@ footer a:hover {
   }
 
   .editor-panel {
-    grid-template-rows: 65px 360px auto;
+    grid-template-rows: 65px 360px auto auto;
   }
 
   .panel-header {

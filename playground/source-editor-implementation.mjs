@@ -1,4 +1,4 @@
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, invertedEffects, isolateHistory, undo } from "@codemirror/commands";
 import {
   bracketMatching,
   HighlightStyle,
@@ -47,6 +47,10 @@ export function createSourceEditor({ parent, initialValue, onChange }) {
         EditorState.tabSize.of(2),
         lineNumbers(),
         history(),
+        // Undo must restore the serialized newline style as well as the visible text.
+        invertedEffects.of((transaction) => transaction.docChanged
+          ? [lineSeparator.reconfigure(lineSeparator.get(transaction.startState))]
+          : []),
         drawSelection(),
         dropCursor(),
         highlightActiveLine(),
@@ -87,6 +91,7 @@ export function createSourceEditor({ parent, initialValue, onChange }) {
             EditorState.lineSeparator.of(next.lineSeparator)
           ),
           scrollIntoView: true,
+          annotations: isolateHistory.of("full"),
         });
       } finally {
         suppressChange = false;
@@ -95,6 +100,10 @@ export function createSourceEditor({ parent, initialValue, onChange }) {
 
     focus() {
       view.focus();
+    },
+
+    undo() {
+      return undo(view);
     },
 
     selectRange(from, to, { scrollIntoView = false } = {}) {

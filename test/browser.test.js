@@ -3,7 +3,8 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { lintExample, resolvePlaygroundConfig } = require("../playground/browser-api");
+const { fixExample, lintExample, resolvePlaygroundConfig } = require("../playground/browser-api");
+const { fixText } = require("../src/lint-text");
 
 test("resolvePlaygroundConfig returns the recommended rules", () => {
   const config = resolvePlaygroundConfig("recommended");
@@ -57,4 +58,42 @@ test("lintExample returns browser-friendly diagnostics", () => {
   assert.equal(result.errorCount, 1);
   assert.equal(result.messages[0].ruleId, "mustache-spacing");
   assert.equal(result.messages[0].line, 1);
+});
+
+test("playground fixes use the shared engine with the selected configuration", () => {
+  for (const source of ["x  \r\ny", "<footer>{{copyright}}</footer>", "x\t \n"]) {
+    const options = { preset: "recommended", filePath: "demo.hbs" };
+    const fixed = fixExample(source, options);
+    assert.deepEqual(fixed, fixText(source, {
+      config: resolvePlaygroundConfig(options.preset), filePath: options.filePath,
+    }));
+    assert.equal(fixed.changed, true);
+    assert.deepEqual(fixed.result, lintExample(fixed.output, options));
+    assert.equal(fixExample(fixed.output, options).changed, false);
+  }
+});
+
+test("playground fixes respect disabled rules, warning overrides, and Windows endings", () => {
+  assert.equal(fixExample("x  ", { preset: "empty" }).output, "x  ");
+  const options = {
+    preset: "empty",
+    config: { rules: {
+      "eol-last": "warn", "linebreak-style": ["warn", "windows"],
+      "no-trailing-spaces": "off",
+    } },
+  };
+  assert.equal(fixExample("x  \ny", options).output, "x  \r\ny\r\n");
+});
+
+test("playground fixes preserve parse-error and unsupported input", () => {
+  for (const source of ["{{#if x}}  ", "{{ value}}\n"]) {
+    const original = lintExample(source);
+    const fixed = fixExample(source);
+    assert.equal(fixed.output, source);
+    assert.equal(fixed.changed, false);
+    assert.deepEqual(fixed.result, original);
+  }
+  assert.throws(() => fixExample("x", { preset: "missing" }), /Unknown preset/u);
+  assert.throws(() => fixExample("x", { config: null }), /must be an object/u);
+  assert.throws(() => fixExample(`x${"\r".repeat(11)}\n`), { code: "HBSGUARD_FIX_LIMIT" });
 });

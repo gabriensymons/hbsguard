@@ -1,6 +1,6 @@
 "use strict";
 
-const { lintExample, resolvePlaygroundConfig } = require("./browser-api");
+const { fixExample, lintExample, resolvePlaygroundConfig } = require("./browser-api");
 const { EXAMPLES } = require("./examples");
 const { RULE_REFERENCE, toggleRuleOverride } = require("./rule-reference");
 const { createSourceEditor, offsetFromLocation } = require("./source-editor");
@@ -15,6 +15,9 @@ const elements = {
   diagnosticsList: document.querySelector("#diagnostics-list"),
   exampleSelect: document.querySelector("#example-select"),
   fileName: document.querySelector("#editor-heading"),
+  fixButton: document.querySelector("#fix-button"),
+  fixStatus: document.querySelector("#fix-status"),
+  undoFixButton: document.querySelector("#undo-fix-button"),
   presetSelect: document.querySelector("#preset-select"),
   resetButton: document.querySelector("#reset-button"),
   resolvedConfig: document.querySelector("#resolved-config-output"),
@@ -36,7 +39,10 @@ function initialize() {
   editor = createSourceEditor({
     parent: elements.sourceEditor,
     initialValue: activeExample.source,
-    onChange: scheduleLint,
+    onChange() {
+      elements.undoFixButton.disabled = true;
+      scheduleLint();
+    },
   });
   bindEvents();
   loadExample(activeExample, { useExamplePreset: true });
@@ -93,6 +99,8 @@ function bindEvents() {
   elements.configEditor.addEventListener("input", scheduleLint);
   elements.copyConfigButton.addEventListener("click", copyResolvedConfig);
   elements.resetButton.addEventListener("click", () => loadExample(activeExample));
+  elements.fixButton.addEventListener("click", applyFixes);
+  elements.undoFixButton.addEventListener("click", undoFix);
   elements.themeToggle.addEventListener("click", toggleTheme);
 }
 
@@ -105,6 +113,7 @@ function loadExample(example, { useExamplePreset = false } = {}) {
     useExamplePreset,
   });
   editor.setValue(example.source);
+  elements.undoFixButton.disabled = true;
   elements.configEditor.value = '{\n  "rules": {}\n}';
   elements.fileName.textContent = example.fileName;
   lintNow();
@@ -117,6 +126,8 @@ function scheduleLint() {
 
 function lintNow() {
   let overrides;
+  elements.fixButton.disabled = true;
+  elements.fixStatus.textContent = "Fix the configuration to try Fix Mode.";
 
   try {
     overrides = JSON.parse(elements.configEditor.value);
@@ -140,9 +151,53 @@ function lintNow() {
 
     elements.resolvedConfig.textContent = JSON.stringify(resolved, null, 2);
     renderDiagnostics(result);
+    const parseError = result.messages.some((message) => message.ruleId === "parse-error");
+    elements.fixButton.disabled = parseError || result.messages.length === 0;
+    elements.fixStatus.textContent = parseError
+      ? "Resolve parse errors before applying fixes."
+      : result.messages.length === 0 ? "No problems to fix." : "Only supported whitespace problems will be fixed.";
   } catch (error) {
     setConfigValidity(false, "Invalid config");
     renderConfigError(error.message);
+  }
+}
+
+function applyFixes() {
+  try {
+    const fixed = fixExample(editor.getValue(), {
+      preset: elements.presetSelect.value,
+      config: JSON.parse(elements.configEditor.value),
+      filePath: activeExample.fileName,
+    });
+    if (!fixed.changed) {
+      lintNow();
+      if (!fixed.result.messages.some((message) => message.ruleId === "parse-error")) {
+        elements.fixStatus.textContent = "No supported fixes needed. Other problems need manual edits.";
+      }
+      return;
+    }
+
+    window.cancelAnimationFrame(lintFrame);
+    editor.setValue(fixed.output);
+    elements.undoFixButton.disabled = false;
+    lintNow();
+    elements.fixStatus.textContent = fixed.result.messages.length
+      ? "Whitespace fixes applied. Remaining problems need manual edits."
+      : "Whitespace fixes applied. Review the updated template.";
+    elements.undoFixButton.focus();
+  } catch (error) {
+    lintNow();
+    elements.fixStatus.textContent = `Fixes could not be applied: ${error.message} Your template is unchanged.`;
+  }
+}
+
+function undoFix() {
+  if (editor.undo()) {
+    window.cancelAnimationFrame(lintFrame);
+    elements.undoFixButton.disabled = true;
+    lintNow();
+    elements.fixStatus.textContent = "Fix undone. Your previous template is restored.";
+    editor.focus();
   }
 }
 

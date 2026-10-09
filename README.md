@@ -30,7 +30,7 @@
 
 `hbsguard` is a standalone Handlebars linter built around plain Handlebars AST semantics. Linting is read-only by default, with optional fixes for three whitespace rules. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
 
-Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything.
+Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything. **Fix whitespace** demonstrates the same fix engine in the editor, with **Undo fix** and **Reset example** available. The demo never writes files or uploads your template.
 
 ## Requirements
 
@@ -109,7 +109,7 @@ Use explicit opt-in to fix `no-trailing-spaces`, `eol-last`, and `linebreak-styl
 npx hbsguard "templates/**/*.hbs" --fix
 ```
 
-Only enabled rules are fixed, including warning-level rules even with `--quiet`. Other findings remain diagnostics. The output describes the final files; warning limits are checked after fixing. Ordinary lint commands and the browser Playground remain read-only.
+Only enabled rules are fixed, including warning-level rules even with `--quiet`. Other findings remain diagnostics. The output describes the final files; warning limits are checked after fixing. Ordinary lint commands remain read-only. The browser Playground applies fixes only to its in-memory editor when requested.
 
 Fixes use validated source ranges. Invalid or overlapping edits reject the whole file's proposed change. Files with parse errors are never modified. Each candidate output is reparsed, and fixes must reach a stable result within ten passes before anything is saved. A second run makes no further changes; unchanged files are not rewritten.
 
