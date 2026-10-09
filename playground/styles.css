@@ -310,8 +310,22 @@ h1 {
 }
 
 .control {
+  position: relative;
   display: grid;
   gap: 5px;
+}
+
+.control::after {
+  position: absolute;
+  right: 14px;
+  bottom: 20px;
+  width: 7px;
+  height: 7px;
+  border: solid var(--muted);
+  border-width: 0 1.5px 1.5px 0;
+  content: "";
+  pointer-events: none;
+  transform: rotate(45deg);
 }
 
 .control > span {
@@ -331,6 +345,7 @@ select,
 }
 
 select {
+  appearance: none;
   width: 100%;
   padding: 0 38px 0 12px;
   color: var(--ink-strong);
