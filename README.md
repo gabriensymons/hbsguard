@@ -28,7 +28,7 @@
   <strong><a href="https://gabriensymons.github.io/hbsguard/">Try hbsguard in the Playground →</a></strong>
 </p>
 
-`hbsguard` is a standalone, read-only Handlebars linter built around plain Handlebars AST semantics. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
+`hbsguard` is a standalone Handlebars linter built around plain Handlebars AST semantics. Linting is read-only by default, with optional fixes for three whitespace rules. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
 
 Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything.
 
@@ -83,6 +83,7 @@ Options:
 - `--format stylish|json`: select the output format; defaults to `stylish`
 - `--max-warnings <n>`: fail when the warning count exceeds `n`
 - `--quiet`: suppress warnings in formatter output
+- `--fix`: apply supported whitespace fixes to the selected files
 - `-h`, `--help`: show help
 
 ### Stylish summary
@@ -100,13 +101,31 @@ Time:      1.90 s
 
 Rule counts are sorted from highest to lowest, with alphabetical ordering for ties. The `Rules:` section is omitted when a run has no visible findings. Use `--format json` for machine-readable diagnostics.
 
-Autofix is not supported in v1. Passing `--fix` exits with an error without modifying files.
+### Fix mode
+
+Use explicit opt-in to fix `no-trailing-spaces`, `eol-last`, and `linebreak-style` findings:
+
+```bash
+npx hbsguard "templates/**/*.hbs" --fix
+```
+
+Only enabled rules are fixed, including warning-level rules even with `--quiet`. Other findings remain diagnostics. The output describes the final files; warning limits are checked after fixing. Ordinary lint commands and the browser Playground remain read-only.
+
+Fixes use validated source ranges. Invalid or overlapping edits reject the whole file's proposed change. Files with parse errors are never modified. Each candidate output is reparsed, and fixes must reach a stable result within ten passes before anything is saved. A second run makes no further changes; unchanged files are not rewritten.
+
+The EOF fixer preserves the first existing newline style, or appends LF when none exists. An enabled `linebreak-style` rule then enforces its configured style. Existing trailing-space detection does not flag spaces immediately before CRLF; Unix conversion can expose those spaces on a later pass. Empty files and extra final newlines remain unchanged.
+
+These are text formatting fixes and can affect quoted helper strings, raw content, `<pre>`, scripts, and styles. They do not guarantee identical rendered output. Choose scoped inputs and review the resulting diff.
+
+Fix mode accepts regular files with one hard link and valid UTF-8, preserving a UTF-8 BOM. Changed output is prepared in a temporary file, flushed, and renamed over the original after rechecking the original content and identity. Errors before replacement leave that file intact; a later file's failure does not undo earlier successful writes. A cleanup failure is reported and may leave a temporary file to remove.
+
+Stop other writers while fixing: the final recheck is not a lock and cannot eliminate all races. Normal permission bits are preserved, but inode replacement does not promise preservation of ownership, ACLs, extended attributes, or crash durability. Read-only lint behavior is unchanged for files that do not meet the write requirements.
 
 ### Exit codes
 
-- `0`: lint completed without errors and did not exceed `--max-warnings`
-- `1`: lint errors were found or the warning limit was exceeded
-- `2`: CLI, configuration, or runtime failure
+- `0`: lint completed without remaining errors and did not exceed `--max-warnings`
+- `1`: remaining lint errors or an exceeded warning limit
+- `2`: CLI, configuration, fix-engine, or file-operation failure; processing stops, and earlier fixed files remain saved
 
 ## Automation and coding agents
 
@@ -122,7 +141,7 @@ Using `--no-install` ensures the command fails if `hbsguard` is not installed lo
 
 A suggested agent instruction is:
 
-> After editing Handlebars files, run `npx --no-install hbsguard "templates/**/*.hbs" --format json --max-warnings 0`. Resolve the reported diagnostics without changing the lint configuration unless requested, then rerun the command. Do not pass `--fix`; `hbsguard` does not modify files.
+> After editing Handlebars files, run `npx --no-install hbsguard "templates/**/*.hbs" --format json --max-warnings 0`. Resolve the reported diagnostics without changing the lint configuration unless requested, then rerun the command. Use `--fix` only when explicitly authorized to rewrite templates, and review the resulting diff.
 
 Treat any nonzero exit code as a failed verification step. See [Exit codes](#exit-codes) for details.
 
@@ -197,7 +216,7 @@ Handlebars parse errors are always reported, independently of configured rules. 
 
 ## Programmatic API
 
-The package exports `loadConfig`, `lintFiles`, `lintText`, and `formatResults`:
+The package exports `loadConfig`, `lintFiles`, `lintText`, `formatResults`, and `fixText`. The existing lint APIs remain read-only:
 
 ```js
 const { formatResults, lintFiles, loadConfig } = require("hbsguard");
@@ -214,6 +233,19 @@ if (output) {
 
 This API provides an integration seam for external harnesses and private corpus runners while keeping repository-specific automation outside the package.
 
+`fixText` is also pure: it accepts a string and returns proposed output without file access.
+
+```js
+const { fixText, loadConfig } = require("hbsguard");
+const { config } = loadConfig();
+const { output, changed, result } = fixText("example  ", {
+  config,
+  filePath: "example.hbs",
+});
+```
+
+`changed` is whether `output` differs from the input. `result` has the ordinary lint result shape and describes `output`. Like `lintText`, calling without configuration enables no rules. Original parse-error input returns unchanged with its existing diagnostics. Invalid fixes, overlap, an introduced parse error, or failure to converge throw an error with the file path and a code (`HBSGUARD_INVALID_FIX`, `HBSGUARD_OVERLAPPING_FIXES`, `HBSGUARD_FIX_PARSE_ERROR`, or `HBSGUARD_FIX_LIMIT`); no partial output is returned.
+
 ## Development
 
 ```bash
@@ -229,4 +261,4 @@ npm pack --dry-run --json
 `build:playground` runs that generation step before producing the static site.
 `preview:stylish` renders clean and representative problem summaries for visually checking terminal formatting. Use `NO_COLOR=1 npm run preview:stylish` to compare the plain-text output.
 
-The project intentionally remains read-only for its initial release; fix mode is deferred until lint behavior is stable across existing template corpora.
+Fix-mode tests use synthetic public inputs and temporary files; repository-specific corpus verification stays outside this package.

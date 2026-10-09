@@ -19,6 +19,13 @@ module.exports = {
             line: lineNumber,
             column: line.length - match[0].length + 1,
             message: "Trailing whitespace is not allowed.",
+            fix: {
+              range: [
+                sourceCode.lineStartIndices[lineNumber - 1] + line.length - match[0].length,
+                sourceCode.lineStartIndices[lineNumber - 1] + line.length,
+              ],
+              text: "",
+            },
           });
         }
       },

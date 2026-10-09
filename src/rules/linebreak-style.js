@@ -30,6 +30,7 @@ function checkUnixLinebreaks(context, sourceCode) {
     context.report({
       line: location.line,
       column: location.column,
+      fix: { range: [match.index, match.index + 2], text: "\n" },
       message: 'Expected Unix linebreaks ("\\n") but found Windows linebreaks ("\\r\\n").',
     });
   }
@@ -50,6 +51,7 @@ function checkWindowsLinebreaks(context, sourceCode) {
     context.report({
       line: location.line,
       column: location.column,
+      fix: { range: [index, index + 1], text: "\r\n" },
       message: 'Expected Windows linebreaks ("\\r\\n") but found Unix linebreaks ("\\n").',
     });
   }

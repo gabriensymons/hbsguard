@@ -5,14 +5,46 @@ const { SourceCode } = require("./source-code");
 const { tokenizeHandlebars } = require("./tokens");
 const rules = require("./rules");
 const { traverseAst } = require("./traverse");
+const { applyFixes, fixError } = require("./fixes");
 
 function lintText(text, options = {}) {
+  return analyzeText(text, options).result;
+}
+
+function fixText(text, options = {}) {
+  if (typeof text !== "string") {
+    throw new TypeError("fixText requires a string.");
+  }
+
+  let output = text;
+  for (let pass = 0; ; pass += 1) {
+    const { result, fixes, parseError } = analyzeText(output, options, true);
+    if (parseError) {
+      if (pass === 0) {
+        return { output: text, changed: false, result };
+      }
+      throw fixError(result.filePath, "HBSGUARD_FIX_PARSE_ERROR", "A fix introduced a parse error.");
+    }
+
+    const next = applyFixes(output, fixes, result.filePath);
+    if (next === output) {
+      return { output, changed: output !== text, result };
+    }
+    if (pass === 10) {
+      throw fixError(result.filePath, "HBSGUARD_FIX_LIMIT", "Fixes did not converge within 10 passes.");
+    }
+    output = next;
+  }
+}
+
+function analyzeText(text, options = {}, collectFixes = false) {
   const config = options.config || { rules: {} };
   const filePath = options.filePath || "<input>";
   const sourceCode = new SourceCode(text, filePath);
   const tokens = tokenizeHandlebars(text);
   const parsed = parseTemplate(text);
   const messages = [];
+  const fixes = [];
 
   if (parsed.error) {
     messages.push({
@@ -50,6 +82,11 @@ function lintText(text, options = {}) {
           ...message,
         });
       },
+      reportFix(fix) {
+        if (collectFixes && !parsed.error && fix !== undefined) {
+          fixes.push({ ruleId, fix });
+        }
+      },
     });
     const listeners = definition.create(context) || {};
 
@@ -70,10 +107,14 @@ function lintText(text, options = {}) {
   messages.sort(compareMessages);
 
   return {
-    filePath,
-    messages,
-    errorCount: messages.filter((message) => message.severity === 2).length,
-    warningCount: messages.filter((message) => message.severity === 1).length,
+    result: {
+      filePath,
+      messages,
+      errorCount: messages.filter((message) => message.severity === 2).length,
+      warningCount: messages.filter((message) => message.severity === 1).length,
+    },
+    fixes,
+    parseError: parsed.error,
   };
 }
 
@@ -102,6 +143,7 @@ function createRuleContext(ruleId, normalizedRule, state) {
         column,
         message: details.message,
       });
+      state.reportFix(details.fix);
     },
   };
 }
@@ -149,5 +191,6 @@ function compareMessages(left, right) {
 }
 
 module.exports = {
+  fixText,
   lintText,
 };
