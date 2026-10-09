@@ -18,6 +18,12 @@ module.exports = {
           line: lineNumber,
           column: line.length + 1,
           message: "Expected a trailing newline at the end of the file.",
+          fix: {
+            range: [sourceCode.text.length, sourceCode.text.length],
+            text: sourceCode.text.endsWith("\r")
+              ? "\n"
+              : (sourceCode.text.match(/\r?\n/u)?.[0] || "\n"),
+          },
         });
       },
     };

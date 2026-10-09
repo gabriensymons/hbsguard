@@ -55,6 +55,7 @@ jobs:
             "src/cli.js",
             "src/config.js",
             "src/files.js",
+            "src/fixes.js",
             "src/formatters.js",
             "src/index.js",
             "src/lint-text.js",

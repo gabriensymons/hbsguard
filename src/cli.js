@@ -4,7 +4,7 @@ const { performance } = require("node:perf_hooks");
 
 const { formatResults } = require("./formatters");
 const { loadConfig } = require("./config");
-const { lintFiles } = require("./linter");
+const { fixFiles, lintFiles } = require("./linter");
 
 function runCli(argv, streams = {}, options = {}) {
   const stdout = streams.stdout || process.stdout;
@@ -27,7 +27,7 @@ function runCli(argv, streams = {}, options = {}) {
       cwd,
       configPath: parsed.configPath,
     });
-    const results = lintFiles(parsed.patterns, {
+    const results = (parsed.fix ? fixFiles : lintFiles)(parsed.patterns, {
       config,
       cwd,
     });
@@ -68,6 +68,7 @@ function parseArgv(argv) {
   const parsed = {
     configPath: undefined,
     format: "stylish",
+    fix: false,
     help: false,
     maxWarnings: -1,
     patterns: [],
@@ -106,7 +107,8 @@ function parseArgv(argv) {
     }
 
     if (argument === "--fix") {
-      throw new Error("Autofix is not supported in v1.");
+      parsed.fix = true;
+      continue;
     }
 
     if (argument.startsWith("-")) {
@@ -158,7 +160,11 @@ function buildHelpText() {
     "  --format <name>        Output format: stylish or json",
     "  --max-warnings <n>     Fail when warning count exceeds n",
     "  --quiet                Suppress warnings in formatter output",
+    "  --fix                  Apply supported whitespace fixes (review the diff)",
     "  -h, --help             Show help",
+    "",
+    "Fixes can change strings and preformatted content. Choose scoped inputs,",
+    "stop other writers, and review the resulting diff.",
   ].join("\n");
 }
 
