@@ -1,6 +1,6 @@
 "use strict";
 
-const { lintText } = require("../src/lint-text");
+const { fixText, lintText } = require("../src/lint-text");
 const { getPreset } = require("../src/presets");
 
 function resolvePlaygroundConfig(presetName = "recommended", overrides = {}) {
@@ -15,6 +15,13 @@ function lintExample(text, options = {}) {
 
   return lintText(text, {
     config,
+    filePath: options.filePath || "playground.hbs",
+  });
+}
+
+function fixExample(text, options = {}) {
+  return fixText(text, {
+    config: resolvePlaygroundConfig(options.preset, options.config),
     filePath: options.filePath || "playground.hbs",
   });
 }
@@ -75,6 +82,7 @@ function createEmptyConfig() {
 }
 
 module.exports = {
+  fixExample,
   lintExample,
   resolvePlaygroundConfig,
 };
