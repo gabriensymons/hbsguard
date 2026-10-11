@@ -30,7 +30,7 @@
 
 `hbsguard` is a standalone Handlebars linter built around plain Handlebars AST semantics. Linting is read-only by default, with optional fixes for three whitespace rules. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
 
-Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything. **Fix whitespace** demonstrates the same fix engine in the editor, with **Undo fix** and **Reset example** available. The demo never writes files or uploads your template.
+Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything. **Apply whitespace fixes** demonstrates the same fix engine in the editor, with **Undo fix** and **Reset example** available. The button confirms **✓ Fixes applied** after success and shows **No automatic fixes** when only manual work remains. Editing the source or configuration checks fix availability again. The demo never writes files or uploads your template.
 
 ## Requirements
 
