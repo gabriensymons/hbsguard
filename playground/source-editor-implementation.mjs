@@ -11,6 +11,7 @@ import {
   EditorView,
   highlightActiveLine,
   highlightActiveLineGutter,
+  highlightTrailingWhitespace,
   keymap,
   lineNumbers,
 } from "@codemirror/view";
@@ -55,6 +56,7 @@ export function createSourceEditor({ parent, initialValue, onChange }) {
         dropCursor(),
         highlightActiveLine(),
         highlightActiveLineGutter(),
+        highlightTrailingWhitespace(),
         bracketMatching(),
         handlebars(),
         syntaxHighlighting(highlightStyle),
