@@ -4,7 +4,7 @@ const EXAMPLES = [
   {
     id: "starter",
     label: "Kitchen sink",
-    description: "A realistic template with several fixable style violations.",
+    description: "A realistic template with trailing whitespace to fix and other style violations to edit manually.",
     preset: "recommended",
     fileName: "profile-card.hbs",
     expectedRule: "mustache-spacing",
