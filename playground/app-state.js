@@ -16,7 +16,15 @@ function resolveExamplePreset({ currentPreset, examplePreset, useExamplePreset =
   return useExamplePreset ? examplePreset : currentPreset;
 }
 
+function getFixButtonPresentation({ canFix, applied = false }) {
+  if (canFix) {
+    return { label: "Apply whitespace fixes", disabled: false };
+  }
+  return { label: applied ? "✓ Fixes applied" : "No automatic fixes", disabled: true };
+}
+
 module.exports = {
+  getFixButtonPresentation,
   getRuleTogglePresentation,
   resolveExamplePreset,
 };

@@ -384,12 +384,6 @@ select {
   gap: 8px;
 }
 
-.fix-button {
-  color: var(--accent-strong);
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
 .fix-controls p {
   margin: 10px 0 0;
   color: var(--muted);

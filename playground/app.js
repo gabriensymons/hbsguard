@@ -4,7 +4,7 @@ const { fixExample, lintExample, resolvePlaygroundConfig } = require("./browser-
 const { EXAMPLES } = require("./examples");
 const { RULE_REFERENCE, toggleRuleOverride } = require("./rule-reference");
 const { createSourceEditor, offsetFromLocation } = require("./source-editor");
-const { getRuleTogglePresentation, resolveExamplePreset } = require("./app-state");
+const { getFixButtonPresentation, getRuleTogglePresentation, resolveExamplePreset } = require("./app-state");
 
 const elements = {
   availableRules: document.querySelector("#available-rules"),
@@ -31,6 +31,7 @@ let activeExample = EXAMPLES[0];
 let copyResetTimer;
 let editor;
 let lintFrame;
+let fixesApplied = false;
 
 function initialize() {
   populateExamples();
@@ -105,6 +106,7 @@ function bindEvents() {
 }
 
 function loadExample(example, { useExamplePreset = false } = {}) {
+  fixesApplied = false;
   activeExample = example;
   elements.exampleSelect.value = example.id;
   elements.presetSelect.value = resolveExamplePreset({
@@ -120,13 +122,15 @@ function loadExample(example, { useExamplePreset = false } = {}) {
 }
 
 function scheduleLint() {
+  fixesApplied = false;
+  renderFixButton(false);
   window.cancelAnimationFrame(lintFrame);
   lintFrame = window.requestAnimationFrame(lintNow);
 }
 
 function lintNow() {
   let overrides;
-  elements.fixButton.disabled = true;
+  renderFixButton(false);
   elements.fixStatus.textContent = "Fix the configuration to try Fix Mode.";
 
   try {
@@ -142,24 +146,52 @@ function lintNow() {
 
   try {
     const preset = elements.presetSelect.value;
-    const result = lintExample(editor.getValue(), {
+    const source = editor.getValue();
+    const options = {
       preset,
       config: overrides,
       filePath: activeExample.fileName,
-    });
+    };
+    const result = lintExample(source, options);
     const resolved = resolvePlaygroundConfig(preset, overrides);
 
     elements.resolvedConfig.textContent = JSON.stringify(resolved, null, 2);
     renderDiagnostics(result);
     const parseError = result.messages.some((message) => message.ruleId === "parse-error");
-    elements.fixButton.disabled = parseError || result.messages.length === 0;
-    elements.fixStatus.textContent = parseError
-      ? "Resolve parse errors before applying fixes."
-      : result.messages.length === 0 ? "No problems to fix." : "Only supported whitespace problems will be fixed.";
+    if (parseError) {
+      elements.fixStatus.textContent = "Resolve parse errors before applying fixes.";
+      return;
+    }
+
+    let canFix;
+    try {
+      canFix = fixExample(source, options).changed;
+    } catch (error) {
+      elements.fixStatus.textContent = `Automatic fixes unavailable: ${error.message}`;
+      return;
+    }
+    renderFixButton(canFix);
+    if (fixesApplied) {
+      elements.fixStatus.textContent = result.messages.length
+        ? "Whitespace fixes applied. Remaining problems need manual edits."
+        : "Whitespace fixes applied. Review the updated template.";
+    } else if (canFix) {
+      elements.fixStatus.textContent = "Supported whitespace fixes are available.";
+    } else {
+      elements.fixStatus.textContent = result.messages.length
+        ? "Remaining problems need manual edits."
+        : "No problems to fix.";
+    }
   } catch (error) {
     setConfigValidity(false, "Invalid config");
     renderConfigError(error.message);
   }
+}
+
+function renderFixButton(canFix) {
+  const { label, disabled } = getFixButtonPresentation({ canFix, applied: fixesApplied });
+  elements.fixButton.textContent = label;
+  elements.fixButton.disabled = disabled;
 }
 
 function applyFixes() {
@@ -179,11 +211,9 @@ function applyFixes() {
 
     window.cancelAnimationFrame(lintFrame);
     editor.setValue(fixed.output);
+    fixesApplied = true;
     elements.undoFixButton.disabled = false;
     lintNow();
-    elements.fixStatus.textContent = fixed.result.messages.length
-      ? "Whitespace fixes applied. Remaining problems need manual edits."
-      : "Whitespace fixes applied. Review the updated template.";
     elements.undoFixButton.focus();
   } catch (error) {
     lintNow();
@@ -193,6 +223,7 @@ function applyFixes() {
 
 function undoFix() {
   if (editor.undo()) {
+    fixesApplied = false;
     window.cancelAnimationFrame(lintFrame);
     elements.undoFixButton.disabled = true;
     lintNow();
@@ -214,6 +245,7 @@ function toggleAvailableRule(ruleId) {
   }
 
   elements.configEditor.value = JSON.stringify(nextConfig, null, 2);
+  fixesApplied = false;
   lintNow();
   elements.configEditor.focus();
 }
