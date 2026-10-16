@@ -100,7 +100,7 @@ test("npm preview:stylish shows clean and problem summaries", () => {
   });
 
   assert.ifError(result.error);
-  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(result.stderr, "");
   const lines = result.stdout.trimEnd().split("\n");
   assert.deepEqual(lines.slice(0, 3), [

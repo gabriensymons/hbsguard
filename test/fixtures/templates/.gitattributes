@@ -1,0 +1,2 @@
+# Clean fixtures must match the recommended Unix linebreak style on every host.
+*.hbs text eol=lf
