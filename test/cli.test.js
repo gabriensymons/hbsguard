@@ -11,7 +11,6 @@ const { runCli: runCliInProcess } = require("../src/cli");
 const rules = require("../src/rules");
 
 const BIN_PATH = path.resolve(__dirname, "..", "bin", "hbsguard.js");
-const NPM_COMMAND = process.platform === "win32" ? "npm.cmd" : "npm";
 const SUMMARY_PREVIEW_PATH = path.resolve(
   __dirname,
   "..",
@@ -35,7 +34,7 @@ test("CLI emits stylish output and exits nonzero for lint errors", (t) => {
   const result = runCli(["templates/**/*.hbs"], workspace);
 
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /templates\/bad\.hbs/u);
+  assert.equal(result.stdout.split("\n")[0], path.join("templates", "bad.hbs"));
   assert.match(result.stdout, /partial-spacing/u);
   assert.match(
     result.stdout,
@@ -92,13 +91,16 @@ test("stylish summary preview renders representative problem counts", () => {
 });
 
 test("npm preview:stylish shows clean and problem summaries", () => {
-  const result = spawnSync(NPM_COMMAND, ["run", "preview:stylish", "--silent"], {
+  // npm.cmd needs a shell on Windows; this command contains only fixed test arguments.
+  const result = spawnSync("npm run preview:stylish --silent", {
+    shell: true,
     cwd: path.resolve(__dirname, ".."),
     encoding: "utf8",
     env: { ...process.env, NO_COLOR: "" },
   });
 
-  assert.equal(result.status, 0);
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(result.stderr, "");
   const lines = result.stdout.trimEnd().split("\n");
   assert.deepEqual(lines.slice(0, 3), [
@@ -201,7 +203,7 @@ test("CLI applies recommended rules when no config file exists", (t) => {
   const result = runCli(["templates/**/*.hbs", "--format", "stylish"], workspace);
 
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /templates\/bad\.hbs/u);
+  assert.equal(result.stdout.split("\n")[0], path.join("templates", "bad.hbs"));
   assert.match(result.stdout, /partial-spacing/u);
 });
 

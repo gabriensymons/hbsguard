@@ -82,3 +82,23 @@ jobs:
             process.exit(1);
           }
           NODE
+
+  windows-fix:
+    name: Windows Fix Mode (Node.js 24.x)
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Fix Mode and CLI
+        run: node --test test/fixes.test.js test/cli.test.js
