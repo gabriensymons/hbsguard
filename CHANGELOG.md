@@ -2,6 +2,21 @@
 
 All notable changes to hbsguard will be documented in this file.
 
+## 0.4.0 — Unreleased
+
+### Added
+
+- Add opt-in CLI `--fix` and a pure `fixText` API for `no-trailing-spaces`, `eol-last`, and `linebreak-style`. Ordinary linting remains read-only, and diagnostics describe the final output.
+- Validate fix ranges, reject overlapping edits, protect parse-error input, and require convergence before saving. CLI writes preserve UTF-8 BOMs and normal permission bits, recheck the original file, and replace it through a temporary file.
+- Demonstrate whitespace fixes in the Playground with undo, clear fix-button states, and visible trailing whitespace.
+- Verify the fix engine and CLI on Windows Node.js 24 in CI alongside the existing Ubuntu Node.js 20, 22, and 24 suites.
+
+### Changed
+
+- Require patched Handlebars `^4.7.10`.
+
+Whitespace fixes can change strings and preformatted content. Review the diff and stop concurrent writers; file replacement does not guarantee ownership, ACL, extended-attribute preservation, or crash durability. A failure on a later file does not undo earlier successful writes.
+
 ## 0.3.0 — 2026-09-09
 
 ### Added

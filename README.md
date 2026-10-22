@@ -117,7 +117,7 @@ The EOF fixer preserves the first existing newline style, or appends LF when non
 
 These are text formatting fixes and can affect quoted helper strings, raw content, `<pre>`, scripts, and styles. They do not guarantee identical rendered output. Choose scoped inputs and review the resulting diff.
 
-Fix mode accepts regular files with one hard link and valid UTF-8, preserving a UTF-8 BOM. Changed output is prepared in a temporary file, flushed, and renamed over the original after rechecking the original content and identity. Errors before replacement leave that file intact; a later file's failure does not undo earlier successful writes. A cleanup failure is reported and may leave a temporary file to remove.
+Fix mode accepts regular files with one hard link and valid UTF-8, preserving a UTF-8 BOM. A leading BOM can still trigger an `indentation` diagnostic; indentation is not automatically fixed. Changed output is prepared in a temporary file, flushed, and renamed over the original after rechecking the original content and identity. Errors before replacement leave that file intact; a later file's failure does not undo earlier successful writes. A cleanup failure is reported and may leave a temporary file to remove.
 
 Stop other writers while fixing: the final recheck is not a lock and cannot eliminate all races. Normal permission bits are preserved, but inode replacement does not promise preservation of ownership, ACLs, extended attributes, or crash durability. Read-only lint behavior is unchanged for files that do not meet the write requirements.
 
@@ -244,7 +244,7 @@ const { output, changed, result } = fixText("example  ", {
 });
 ```
 
-`changed` is whether `output` differs from the input. `result` has the ordinary lint result shape and describes `output`. Like `lintText`, calling without configuration enables no rules. Original parse-error input returns unchanged with its existing diagnostics. Invalid fixes, overlap, an introduced parse error, or failure to converge throw an error with the file path and a code (`HBSGUARD_INVALID_FIX`, `HBSGUARD_OVERLAPPING_FIXES`, `HBSGUARD_FIX_PARSE_ERROR`, or `HBSGUARD_FIX_LIMIT`); no partial output is returned.
+`changed` is whether `output` differs from the input. `result` has the ordinary lint result shape and describes `output`. Like `lintText`, calling without configuration enables no rules. Original parse-error input returns unchanged with its existing diagnostics. Invalid fixes, overlap, an introduced parse error, or failure to converge throw an `Error` with `error.code` set to `HBSGUARD_INVALID_FIX`, `HBSGUARD_OVERLAPPING_FIXES`, `HBSGUARD_FIX_PARSE_ERROR`, or `HBSGUARD_FIX_LIMIT`; no partial output is returned. `error.message` starts with the file path followed by `: `; there is no separate `error.filePath` property. Branch on `error.code` rather than parsing the message.
 
 ## Development
 
