@@ -2,6 +2,12 @@
 
 All notable changes to hbsguard will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- Avoid stack overflows when discovering templates under directories containing very large numbers of files.
+
 ## 0.4.0 — 2026-10-23
 
 ### Added

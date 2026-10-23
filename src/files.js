@@ -128,7 +128,9 @@ function walkDirectory(directoryPath) {
     const entryPath = path.join(directoryPath, entry.name);
 
     if (entry.isDirectory()) {
-      results.push(...walkDirectory(entryPath));
+      for (const filePath of walkDirectory(entryPath)) {
+        results.push(filePath);
+      }
       continue;
     }
 
