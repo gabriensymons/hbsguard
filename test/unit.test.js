@@ -230,6 +230,42 @@ test("absolute glob patterns discover matching files", (t) => {
   );
 });
 
+test("file discovery handles large child directories", (t) => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "hbsguard-files-"));
+  t.after(() => fs.rmSync(workspace, { recursive: true, force: true }));
+
+  for (const name of ["bulk/a.hbs", "bulk/ignored.hbs", "node_modules/skip.hbs", ".git/skip.hbs", "z.hbs"]) {
+    const filePath = path.join(workspace, name);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, "{{title}}\n");
+  }
+
+  const assets = Array.from({ length: 200_000 }, (_, index) => ({
+    name: `asset-${index}.txt`,
+    isDirectory: () => false,
+    isFile: () => true,
+  }));
+  const readdirSync = fs.readdirSync;
+  t.mock.method(fs, "readdirSync", (directory, options) => {
+    const entries = readdirSync(directory, options).reverse();
+    return directory === path.join(workspace, "bulk") ? entries.concat(assets) : entries;
+  });
+
+  const expected = [path.join(workspace, "bulk", "a.hbs"), path.join(workspace, "z.hbs")];
+  for (const patterns of [
+    [],
+    ["**/*.hbs", "bulk/*.hbs"],
+    [workspace],
+    [path.join(workspace, "**", "*.hbs")],
+  ]) {
+    assert.deepEqual(
+      resolveLintFiles(patterns, { cwd: workspace, ignore: ["bulk/ignored.hbs"] }),
+      expected,
+      JSON.stringify(patterns)
+    );
+  }
+});
+
 test("POSIX absolute globs normalize lexical dot segments before matching", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "hbsguard-files-"));
   const target = path.join(root, "target");
