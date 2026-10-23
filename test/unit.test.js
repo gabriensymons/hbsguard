@@ -247,7 +247,7 @@ test("file discovery handles large child directories", (t) => {
   }));
   const readdirSync = fs.readdirSync;
   t.mock.method(fs, "readdirSync", (directory, options) => {
-    const entries = readdirSync(directory, options);
+    const entries = readdirSync(directory, options).reverse();
     return directory === path.join(workspace, "bulk") ? entries.concat(assets) : entries;
   });
 
