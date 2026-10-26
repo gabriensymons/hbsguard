@@ -2,6 +2,14 @@
 
 All notable changes to hbsguard will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- **Breaking:** require patched Node.js 22, 24, or 26 (`^22.23.4 || ^24.22.1 || ^26.12.1`), dropping Node.js 20 and other unsupported release lines.
+- Test Node.js 22, 24, and 26 in Ubuntu CI, and select current patches above the security minimums in CI, publishing, and Playground builds.
+- Use the existing release workflow's pinned checkout/setup-node v6 actions in CI.
+
 ## 0.4.1 — 2026-10-23
 
 ### Fixed

@@ -34,7 +34,9 @@ Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit 
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 22 (22.23.4 or newer), 24 (24.22.1 or newer), or 26 (26.12.1 or newer)
+
+Use the latest patch of your chosen Node.js major version. These minimums include the [October 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases); Node.js 20 is no longer supported. Updating hbsguard does not update the Node.js runtime in your local or CI environment.
 
 ## Installation
 
