@@ -38,6 +38,10 @@ Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit 
 
 Use the latest patch of your chosen Node.js major version. These minimums include the [October 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases); Node.js 20 is no longer supported. Updating hbsguard does not update the Node.js runtime in your local or CI environment.
 
+### Upgrading from 0.4.1
+
+Update Node.js in local development, CI, and any container images to a supported version before upgrading hbsguard. Then update the hbsguard dependency and lockfile to 0.5.0, and rerun your existing read-only lint command and project tests. CLI options, configuration, API results, and fix behavior are unchanged from 0.4.1; no template or configuration migration is required.
+
 ## Installation
 
 ```bash
