@@ -2,7 +2,7 @@
 
 All notable changes to hbsguard will be documented in this file.
 
-## 0.5.0 — Unreleased
+## 0.5.0 — 2026-10-26
 
 ### Changed
 
