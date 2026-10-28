@@ -68,6 +68,34 @@ test("parses a basic mustache", async () => {
   assert.match(tree.toString(), /Path/);
 });
 
+test("highlights both delimiters of padded mustaches", async () => {
+  const { highlightTree, tags } = await import("@lezer/highlight");
+  for (const expression of ["{{user.name}}", "{{ user.name }}", "{{ user.name}}", "{{user.name }}", "{{\tuser.name\t}}", "{{\nuser.name\n}}", "{{~ user.name ~}}", "{{{ user.name }}}", "{{> avatar user }}"]) {
+    const source = `  <h2>${expression}</h2>  `;
+    const tree = await parse(source);
+    assert.deepEqual(errorNodeRanges(tree), [], source);
+    const delimiters = [];
+    highlightTree(tree, {
+      style: (tagSet) => tagSet.includes(tags.punctuation) ? "delimiter" : null,
+    }, (from, to) => delimiters.push([from, to]));
+    for (const index of [source.indexOf("{{"), source.lastIndexOf("}}")]) {
+      assert(delimiters.some(([from, to]) => from <= index && to >= index + 2), source);
+    }
+  }
+});
+
+test("parses padding at else and raw-block opening boundaries", async () => {
+  for (const [source, expected] of [
+    ["{{#if user}}yes{{ else }}no{{/if}}", /ElseClause/],
+    ["{{#if user}}yes{{ else if other }}maybe{{/if}}", /ElseClause/],
+    ["{{{{ raw }}}}{{notParsed}}{{{{/raw}}}}", /RawBlock/],
+  ]) {
+    const tree = await parse(source);
+    assert.deepEqual(errorNodeRanges(tree), [], source);
+    assert.match(tree.toString(), expected);
+  }
+});
+
 test("parses plain Handlebars path forms", async () => {
   const cases = [
     ["{{user}}", /Path/],
