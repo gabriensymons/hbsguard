@@ -2,6 +2,7 @@
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const Handlebars = require("handlebars");
 const { applyFixes } = require("../src/fixes");
 const { fixText, lintText } = require("../src/lint-text");
 const rules = require("../src/rules");
@@ -104,6 +105,8 @@ test("each candidate obeys off, warn, and error without leaking fix metadata", (
     ["no-trailing-spaces", "x  \n", "x\n"],
     ["eol-last", "x\r\ny", "x\r\ny\r\n"],
     ["linebreak-style", "x\r\n", "x\n"],
+    ["mustache-spacing", "{{ value}}", "{{value}}"],
+    ["partial-spacing", "{{>p}}", "{{> p}}"],
   ]) {
     for (const severity of ["off", "warn", "error"]) {
       const settings = { config: { rules: { [ruleId]: severity } } };
@@ -132,10 +135,162 @@ test("original parse errors retain both parse and rule diagnostics", () => {
 
 test("unfixable findings remain after supported fixes", () => {
   const settings = options();
-  settings.config.rules["mustache-spacing"] = "error";
-  const fixed = fixText("{{ value}}  ", settings);
-  assert.equal(fixed.output, "{{ value}}\n");
-  assert.deepEqual(fixed.result.messages.map((m) => m.ruleId), ["mustache-spacing"]);
+  settings.config.rules["no-bare-builtin-block-helpers"] = "error";
+  const fixed = fixText("{{if x}}  ", settings);
+  assert.equal(fixed.output, "{{if x}}\n");
+  assert.deepEqual(fixed.result.messages.map((m) => m.ruleId), ["no-bare-builtin-block-helpers"]);
+});
+
+function spacingOptions(style = "consistent", beforeClose = "allow") {
+  return { config: { rules: {
+    "mustache-spacing": ["error", { style }],
+    "partial-spacing": ["error", { beforeClose }],
+  } } };
+}
+
+test("mustache spacing repairs only invalid padding with the selected style", () => {
+  for (const [style, source, output] of [
+    ["consistent", "{{ value}} {{value }} {{  value\t}} {{ value }} {{value}}", "{{value}} {{value}} {{value}} {{ value }} {{value}}"],
+    ["always", "{{value}} {{{value}}} {{~value~}}", "{{ value }} {{{ value }}} {{~ value ~}}"],
+    ["never", "{{ value }} {{{ value }}} {{~ value ~}}", "{{value}} {{{value}}} {{~value~}}"],
+    ["consistent", "{{#if x }}A{{else if y }}B{{else }}C{{/if }}", "{{#if x}}A{{else if y}}B{{else}}C{{/if}}"],
+    ["consistent", "{{#[normal] }}A{{/[normal] }}", "{{#[normal]}}A{{/[normal]}}"],
+    ["never", "{{^if x }}A{{^ }}B{{/if }} {{&value }}", "{{^if x}}A{{^}}B{{/if}} {{&value}}"],
+    ["always", "{{#if x}}A{{else if y}}B{{else}}C{{/if}} {{&value}}", "{{#if x}}A{{ else if y }}B{{ else }}C{{/if}} {{&value}}"],
+    ["consistent", "\ufeff😀{{ value}} {{ other}}", "\ufeff😀{{value}} {{other}}"],
+  ]) {
+    const settings = spacingOptions(style);
+    const fixed = fixText(source, settings);
+    assert.equal(fixed.output, output, `${style}: ${source}`);
+    assert.deepEqual(fixed.result, lintText(output, settings));
+    assert.equal(fixText(output, settings).changed, false);
+  }
+  const manual = "{{#if x}}A{{^}}B{{/if}} {{&value}} {{~{value}~}}";
+  const settings = spacingOptions("always");
+  assert.equal(fixText(manual, settings).output, manual);
+  assert.equal(fixText(manual, settings).result.errorCount, 5);
+});
+
+test("partial spacing handles blocks, dynamic names, trim markers, and closing options", () => {
+  for (const [beforeClose, source, output] of [
+    ["allow", "{{>p}} {{>\t p  }} {{> p }}", "{{> p}} {{> p }} {{> p }}"],
+    ["never", "{{>p  }} {{~>\tp \t~}}", "{{> p}} {{~> p~}}"],
+    ["allow", "{{#>p  }}X{{/p}}", "{{#> p }}X{{/p}}"],
+    ["allow", "{{#>[normal]  }}X{{/[normal] }}", "{{#> [normal] }}X{{/[normal]}}"],
+    ["never", '{{>  (lookup names "selected")  }}', '{{> (lookup names "selected")}}'],
+    ["allow", '{{>p title="hello world"  }}', '{{> p title="hello world" }}'],
+  ]) {
+    const settings = spacingOptions("consistent", beforeClose);
+    const fixed = fixText(source, settings);
+    assert.equal(fixed.output, output);
+    assert.deepEqual(fixed.result.messages, []);
+    assert.equal(fixText(output, settings).changed, false);
+  }
+});
+
+test("ambiguous scanner boundaries and literal content remain manual", () => {
+  for (const source of [
+    '{{helper "x  }} value"}}',
+    '{{helper "}} {{ value}} {{>p}}"}}',
+    "{{helper [x  }} y]}}",
+    "{{helper [x  }} y]=value}}",
+    "{{#[a  }} ]}}X{{/[a  }} ] }}",
+    "{{#[x }} {{else }}]}}X{{/[x }} {{else }}]}}",
+    "{{#[x }} {{  /z]}}A{{/[x }} {{  /z] }}",
+    "{{#[x }} {{ /z]}}A{{/[x }} {{ /z] }}",
+    "{{#>[x }} {{ /z]}}A{{/[x }} {{ /z] }}",
+    '{{#> "x }} {{ /z" }}A{{/[x }} {{ /z] }}',
+    "{{#if x}}{{else }}{{/if}}",
+    "{{{{raw}}}}{{ value}}{{>p}}{{{{/raw}}}}",
+    "{{!-- {{ value}} {{>p}} --}}",
+    "\\{{ value}}",
+    "{{{value}~}}",
+    '{{#*inline "p"}}{{{{raw}}}}{{else }}{{{{/raw}}}}{{/inline}}',
+    '{{#*inline "p"}}{{helper "}} {{else }}"}}{{/inline}}',
+  ]) {
+    for (const style of ["consistent", "always", "never"]) {
+      const settings = spacingOptions(style);
+      const original = lintText(source, settings);
+      assert(!original.messages.some((message) => message.ruleId === "parse-error"), source);
+      assert.deepEqual(fixText(source, settings), { output: source, changed: false, result: original });
+    }
+  }
+});
+
+test("spacing fixes preserve line breaks and leave multiline closing padding alone", () => {
+  for (const [source, output] of [
+    ["{{helper\n x }}", "{{helper\n x }}"],
+    ["{{\rvalue}}", "{{\rvalue}}"],
+    ["{{\u2028value}}", "{{\u2028value}}"],
+    ["  {{>\n p}}\nZ", "  {{>\n p}}\nZ"],
+    ["{{>\r\n p}}", "{{>\r\n p}}"],
+    ["{{>\r p}}", "{{>\r p}}"],
+    ["{{>\u2028p}}", "{{>\u2028p}}"],
+    ["{{#>\n p}}X{{/p}}", "{{#>\n p}}X{{/p}}"],
+    ["{{>  p\n x  }}", "{{> p\n x  }}"],
+    ["{{> p\n x  }}", "{{> p\n x  }}"],
+  ]) {
+    const settings = spacingOptions("consistent", "never");
+    const fixed = fixText(source, settings);
+    assert.equal(fixed.output, output);
+    assert.equal(fixText(output, settings).changed, false);
+  }
+});
+
+test("spacing fixes preserve rendering, including standalone and trimmed partials", () => {
+  const handlebars = Handlebars.create();
+  handlebars.registerHelper("echo", (value) => value);
+  handlebars.registerHelper("raw", (options) => options.fn());
+  handlebars.registerPartial("p", "P\nQ\n");
+  handlebars.registerPartial("layout", "L[{{> @partial-block}}]\n");
+  const data = { value: "<value>", x: true, y: false, names: { selected: "p" } };
+  for (const source of [
+    "😀{{ value}} {{{ value}}} {{~ value~}}",
+    "{{#if x }}A{{else if y }}B{{else }}C{{/if }}",
+    "{{^if y }}A{{^ }}B{{/if }} {{&value }}",
+    '  {{>  (lookup names "selected")  }}\nZ',
+    "  {{>p  }}\nZ",
+    "  {{~>p  ~}}\nZ",
+    "  {{#>layout  }}\nX\n  {{/layout }}\nZ",
+    "  {{>  p\n }}\nZ",
+    '  {{echo "}} {{ value}} {{>p}}"}}\n',
+    "{{{{raw}}}}{{ value}}{{>p}}{{{{/raw}}}}",
+  ]) {
+    for (const style of ["consistent", "always", "never"]) {
+      for (const beforeClose of ["allow", "never"]) {
+        const settings = spacingOptions(style, beforeClose);
+        const fixed = fixText(source, settings);
+        for (const compileOptions of [{}, { ignoreStandalone: true }, { preventIndent: true }]) {
+          assert.equal(handlebars.compile(fixed.output, compileOptions)(data),
+            handlebars.compile(source, compileOptions)(data), `${style}/${beforeClose}: ${source}`);
+        }
+        assert.equal(fixText(fixed.output, settings).changed, false);
+      }
+    }
+  }
+});
+
+test("spacing composes with existing whitespace fixes without depending on rule order", () => {
+  const source = "\ufeff😀{{ value}}  \r\n{{>p  }}  \r\n{{>  p\r\n x}}";
+  for (const linebreakStyle of ["unix", "windows"]) {
+    const settings = options(linebreakStyle);
+    Object.assign(settings.config.rules, spacingOptions().config.rules);
+    const output = linebreakStyle === "unix"
+      ? "\ufeff😀{{value}}\n{{> p }}\n{{> p\n x}}\n"
+      : "\ufeff😀{{value}}  \r\n{{> p }}  \r\n{{> p\r\n x}}\r\n";
+    const fixed = fixText(source, settings);
+    assert.equal(fixed.output, output);
+    assert.deepEqual(fixed.result.messages, []);
+    assert.equal(fixText(output, settings).changed, false);
+    assert.deepEqual(fixText(source, {
+      ...settings, config: { rules: Object.fromEntries(Object.entries(settings.config.rules).toReversed()) },
+    }), fixed);
+  }
+  const sourceWithParseError = "{{ value}} {{>p}} {{#if x}}";
+  const settings = spacingOptions();
+  assert.deepEqual(fixText(sourceWithParseError, settings), {
+    output: sourceWithParseError, changed: false, result: lintText(sourceWithParseError, settings),
+  });
 });
 
 function mockReports(t, getFixes) {

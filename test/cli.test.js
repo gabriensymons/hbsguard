@@ -446,12 +446,30 @@ test("CLI fixes warnings despite quiet mode and evaluates the final warning coun
 test("CLI reports remaining unfixable errors after saving supported fixes", (t) => {
   const workspace = createWorkspace({
     "hbsguard.config.cjs": "module.exports = { extends: ['recommended'] };\n",
-    "a.hbs": "{{ value}}  ",
+    "a.hbs": "{{#if x}}\n    {{ value}}  \n{{/if}}",
   }, t);
   const result = runCli(["a.hbs", "--fix", "--format", "json"], workspace);
   assert.equal(result.status, 1);
-  assert.equal(fs.readFileSync(path.join(workspace, "a.hbs"), "utf8"), "{{ value}}\n");
-  assert.deepEqual(JSON.parse(result.stdout)[0].messages.map((m) => m.ruleId), ["mustache-spacing"]);
+  assert.equal(fs.readFileSync(path.join(workspace, "a.hbs"), "utf8"), "{{#if x}}\n    {{value}}\n{{/if}}\n");
+  assert.deepEqual(JSON.parse(result.stdout)[0].messages.map((m) => m.ruleId), ["indentation"]);
+});
+
+test("CLI applies spacing warning fixes only with opt-in and skips a second write", (t) => {
+  const source = "{{ value}}\n{{>p  }}\n";
+  const workspace = createWorkspace({
+    "hbsguard.config.cjs": "module.exports = { rules: { 'mustache-spacing': 'warn', 'partial-spacing': 'warn' } };\n",
+    "a.hbs": source,
+  }, t);
+  const file = path.join(workspace, "a.hbs");
+  const args = ["a.hbs", "--quiet", "--max-warnings", "0"];
+  assert.equal(runCli(args, workspace).status, 1);
+  assert.equal(fs.readFileSync(file, "utf8"), source);
+  assert.equal(runCli([...args, "--fix"], workspace).status, 0);
+  assert.equal(fs.readFileSync(file, "utf8"), "{{value}}\n{{> p }}\n");
+  const after = fs.statSync(file);
+  assert.equal(runCli([...args, "--fix"], workspace).status, 0);
+  assert.equal(fs.statSync(file).mtimeMs, after.mtimeMs);
+  assert.equal(fs.statSync(file).ino, after.ino);
 });
 
 test("CLI rejects unsafe inputs without changing bytes", async (t) => {

@@ -28,7 +28,7 @@
   <strong><a href="https://gabriensymons.github.io/hbsguard/">Try hbsguard in the Playground →</a></strong>
 </p>
 
-`hbsguard` is a standalone Handlebars linter built around plain Handlebars AST semantics. Linting is read-only by default, with optional fixes for three whitespace rules. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
+`hbsguard` is a standalone Handlebars linter built around plain Handlebars AST semantics. Linting is read-only by default, with optional fixes for five whitespace rules. It provides a generic `recommended` preset and supports project-specific configurations without coupling the published package to any one repository.
 
 Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything. **Apply whitespace fixes** demonstrates the same fix engine in the editor, with **Undo fix** and **Reset example** available. The button confirms **✓ Fixes applied** after success and shows **No automatic fixes** when only manual work remains. Editing the source or configuration checks fix availability again. The demo never writes files or uploads your template.
 
@@ -109,13 +109,17 @@ Rule counts are sorted from highest to lowest, with alphabetical ordering for ti
 
 ### Fix mode
 
-Use explicit opt-in to fix `no-trailing-spaces`, `eol-last`, and `linebreak-style` findings:
+Use explicit opt-in to fix supported `mustache-spacing`, `partial-spacing`, `no-trailing-spaces`, `eol-last`, and `linebreak-style` findings:
 
 ```bash
 npx hbsguard "templates/**/*.hbs" --fix
 ```
 
 Only enabled rules are fixed, including warning-level rules even with `--quiet`. Other findings remain diagnostics. The output describes the final files; warning limits are checked after fixing. Ordinary lint commands remain read-only. The browser Playground applies fixes only to its in-memory editor when requested.
+
+For `mustache-spacing`, the default `consistent` style removes invalid padding (`{{ value}}` becomes `{{value}}`) and leaves already-valid padded or unpadded tags unchanged. `always` requests one space on each side; `never` removes inner padding. For `partial-spacing`, fixes insert one space after `>` or `#>` (`{{>header}}` becomes `{{> header}}`) and reduce excessive closing padding to one space, or remove it with `beforeClose: "never"`.
+
+Spacing fixes preserve trim markers and expression contents. Apparent tags inside raw text, comments, or quoted values, spacing inside decorator blocks such as inline partial definitions, ambiguous token boundaries, and syntax that cannot accept the requested padding remain manual findings. Partial-marker spacing containing a line break also needs a manual edit; automatic spacing fixes do not join lines. Indentation is not automatically fixed.
 
 Fixes use validated source ranges. Invalid or overlapping edits reject the whole file's proposed change. Files with parse errors are never modified. Each candidate output is reparsed, and fixes must reach a stable result within ten passes before anything is saved. A second run makes no further changes; unchanged files are not rewritten.
 
