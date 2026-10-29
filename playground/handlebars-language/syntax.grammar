@@ -7,17 +7,17 @@ templateItem { LongComment | Comment | RawBlock | Decorator | Block | PartialBlo
 LongComment { (WhitespaceLongCommentOpen | LongCommentOpen) LongCommentText? (WhitespaceLongCommentClose | LongCommentClose) }
 Comment { (WhitespaceCommentOpen | CommentOpen) InlineCommentText? (WhitespaceCommentClose | CloseDelimiter) }
 RawBlock { RawBlockOpen RawText* RawBlockClose }
-RawBlockOpen { RawOpenDelimiter RawBlockOpenContent }
+RawBlockOpen { RawOpenDelimiter space? RawBlockOpenContent }
 RawBlockClose { RawOpenDelimiter RawBlockCloseContent }
 Decorator { OpenDelimiter DecoratorContent }
 Block { BlockOpen templateItem* (ElseClause templateItem*)? BlockClose }
 BlockOpen { OpenDelimiter BlockOpenContent }
-ElseClause { OpenDelimiter ElseClauseContent }
+ElseClause { OpenDelimiter space? ElseClauseContent }
 PartialBlock { PartialBlockOpen templateItem* BlockClose }
 PartialBlockOpen { OpenDelimiter PartialBlockOpenContent }
 BlockClose { OpenDelimiter BlockCloseContent }
 Partial { OpenDelimiter PartialContent }
-Mustache { OpenDelimiter MustacheContent }
+Mustache { OpenDelimiter space? MustacheContent }
 TripleMustache { OpenDelimiter TripleMustacheContent }
 HtmlText { PlainHtmlText | EscapedHandlebars | BackslashText | Backslash }
 
