@@ -4,7 +4,7 @@ const EXAMPLES = [
   {
     id: "starter",
     label: "Kitchen sink",
-    description: "A realistic template with trailing whitespace to fix and other style violations to edit manually.",
+    description: "A realistic template with spacing and trailing whitespace to fix, plus indentation to edit manually.",
     preset: "recommended",
     fileName: "profile-card.hbs",
     expectedRule: "mustache-spacing",
@@ -36,7 +36,7 @@ const EXAMPLES = [
   {
     id: "mustache-spacing",
     label: "Mustache spacing",
-    description: "Mixing padded and unpadded sides is rejected.",
+    description: "Fix asymmetric padding while keeping already-valid spacing unchanged.",
     preset: "recommended",
     fileName: "spacing.hbs",
     expectedRule: "mustache-spacing",
@@ -54,7 +54,7 @@ const EXAMPLES = [
   {
     id: "partial-spacing",
     label: "Partial spacing",
-    description: "Partials require a separator after the greater-than marker.",
+    description: "Add the required separator after the greater-than marker with an automatic fix.",
     preset: "recommended",
     fileName: "partials.hbs",
     expectedRule: "partial-spacing",

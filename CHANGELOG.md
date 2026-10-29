@@ -2,6 +2,12 @@
 
 All notable changes to hbsguard will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Add guarded automatic fixes for `mustache-spacing` and `partial-spacing` through `fixText`, CLI `--fix`, and the Playground. Fixes follow the configured spacing style and preserve trim markers; unsafe token boundaries and partial-marker spacing containing line breaks remain manual findings.
+
 ## 0.5.0 — 2026-10-26
 
 ### Changed

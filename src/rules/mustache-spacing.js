@@ -1,6 +1,6 @@
 "use strict";
 
-const { extractTagPadding } = require("../tokens");
+const { extractTagPadding, getFixableTokens, getTagContentInfo } = require("../tokens");
 
 const CHECKED_TYPES = new Set([
   "mustache",
@@ -23,7 +23,8 @@ module.exports = {
     };
 
     return {
-      Template({ tokens }) {
+      Template({ tokens, ast, sourceCode }) {
+        let fixable;
         for (const token of tokens) {
           if (!CHECKED_TYPES.has(token.type)) {
             continue;
@@ -42,16 +43,31 @@ module.exports = {
             continue;
           }
 
+          fixable ??= getFixableTokens(tokens, ast, sourceCode);
           context.report({
             line: token.start.line,
             column: token.start.column,
             message: getErrorMessage(options.style),
+            fix: fixable.has(token) ? getFix(token, padding, options.style) : undefined,
           });
         }
       },
     };
   },
 };
+
+function getFix(token, padding, style) {
+  if (/[\r\n\u2028\u2029]/u.test(padding.leading + padding.trailing)) {
+    return undefined;
+  }
+  if (style === "always" && /^[#^/&{]/u.test(padding.body)) {
+    return undefined;
+  }
+  const content = getTagContentInfo(token);
+  const start = token.startIndex + token.openDelimiter.length + content.offset;
+  const space = style === "always" ? " " : "";
+  return { range: [start, start + content.text.length], text: `${space}${padding.body}${space}` };
+}
 
 function isValidPadding(leadingWidth, trailingWidth, style) {
   if (style === "always") {
