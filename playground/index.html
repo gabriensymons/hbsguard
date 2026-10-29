@@ -82,6 +82,7 @@
                 <button class="secondary-button" id="undo-fix-button" type="button" disabled>Undo fix</button>
               </div>
               <p id="fix-help">Trailing whitespace is highlighted in the editor. This button fixes supported mustache and partial spacing, trailing spaces, final newlines, and line endings; indentation and spacing that cannot be safely fixed need manual edits. Changes stay in the editor; CLI <code>--fix</code> writes files. Review changes to strings or preformatted text.</p>
+              <p id="editor-keyboard-help"><kbd>Tab</kbd> indents; <kbd>Shift+Tab</kbd> unindents the current line or selected lines. Press <kbd>Esc</kbd>, then <kbd>Tab</kbd> to move focus out of the editor (press <kbd>Esc</kbd> twice if text is selected).</p>
               <p class="fix-status" id="fix-status" role="status" aria-live="polite" aria-atomic="true"></p>
             </section>
             <section class="problems-section" aria-labelledby="problems-heading">

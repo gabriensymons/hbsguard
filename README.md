@@ -32,6 +32,8 @@
 
 Use the [browser Playground](https://gabriensymons.github.io/hbsguard/) to edit preloaded violations, switch presets, and inspect live diagnostics without installing anything. **Apply whitespace fixes** demonstrates the same fix engine in the editor, with **Undo fix** and **Reset example** available. The button confirms **✓ Fixes applied** after success and shows **No automatic fixes** when only manual work remains. Editing the source or configuration checks fix availability again. The demo never writes files or uploads your template.
 
+In the template editor, **Tab** indents the current line or selected lines by two spaces, and **Shift+Tab** unindents them. Press **Esc**, then **Tab** to move keyboard focus out of the editor; press **Esc** twice first if text is selected.
+
 ## Requirements
 
 - Node.js 22 (22.23.4 or newer), 24 (24.22.1 or newer), or 26 (26.12.1 or newer)

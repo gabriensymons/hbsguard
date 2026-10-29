@@ -1,4 +1,4 @@
-import { defaultKeymap, history, historyKeymap, invertedEffects, isolateHistory, undo } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, indentWithTab, invertedEffects, isolateHistory, undo } from "@codemirror/commands";
 import {
   bracketMatching,
   HighlightStyle,
@@ -60,9 +60,10 @@ export function createSourceEditor({ parent, initialValue, onChange }) {
         bracketMatching(),
         handlebars(),
         syntaxHighlighting(highlightStyle),
-        keymap.of([...defaultKeymap, ...historyKeymap]),
+        keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
         EditorView.contentAttributes.of({
           "aria-label": "Handlebars source editor",
+          "aria-describedby": "editor-keyboard-help",
           "aria-multiline": "true",
           autocapitalize: "off",
           autocomplete: "off",
