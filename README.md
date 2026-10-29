@@ -40,9 +40,13 @@ In the template editor, **Tab** indents the current line or selected lines by tw
 
 Use the latest patch of your chosen Node.js major version. These minimums include the [October 2026 Node.js security fixes](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases); Node.js 20 is no longer supported. Updating hbsguard does not update the Node.js runtime in your local or CI environment.
 
-### Upgrading from 0.4.1
+### Upgrading to 0.6.0
 
-Update Node.js in local development, CI, and any container images to a supported version before upgrading hbsguard. Then update the hbsguard dependency and lockfile to 0.5.0, and rerun your existing read-only lint command and project tests. CLI options, configuration, API results, and fix behavior are unchanged from 0.4.1; no template or configuration migration is required.
+From 0.5.0, update the hbsguard dependency and lockfile, then rerun your existing read-only lint command and project tests. Node.js requirements, CLI options, configuration, ordinary lint diagnostics, and API result shapes are unchanged; no template or configuration migration is required.
+
+Opt-in `--fix` and `fixText` now repair enabled `mustache-spacing` and `partial-spacing` rules, including those in the `recommended` preset. Existing fix workflows can therefore make additional spacing edits. Review the resulting diff; ambiguous or unsupported syntax remains a manual finding as described in [Fix mode](#fix-mode).
+
+When upgrading from 0.4.1 or earlier, first update Node.js in local development, CI, and any container images to a supported version listed above.
 
 ## Installation
 
