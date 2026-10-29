@@ -11,13 +11,14 @@ const {
 const { fixExample } = require("../playground/browser-api");
 
 test("fix button follows actual fix availability, even when manual diagnostics remain", () => {
-  const source = "{{ value}}  ";
+  const source = "{{#if x}}\n    {{ value}}  \n{{/if}}";
   const preview = fixExample(source);
   assert.deepEqual(getFixButtonPresentation({ canFix: preview.changed }), {
     label: "Apply whitespace fixes", disabled: false,
   });
 
-  assert(preview.result.messages.some((message) => message.ruleId === "mustache-spacing"));
+  assert(preview.result.messages.some((message) => message.ruleId === "indentation"));
+  assert(!preview.result.messages.some((message) => message.ruleId === "mustache-spacing"));
   const after = fixExample(preview.output);
   assert.deepEqual(getFixButtonPresentation({ canFix: after.changed, applied: true }), {
     label: "✓ Fixes applied", disabled: true,

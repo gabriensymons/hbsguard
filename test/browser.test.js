@@ -61,7 +61,7 @@ test("lintExample returns browser-friendly diagnostics", () => {
 });
 
 test("playground fixes use the shared engine with the selected configuration", () => {
-  for (const source of ["x  \r\ny", "<footer>{{copyright}}</footer>", "x\t \n"]) {
+  for (const source of ["x  \r\ny", "<footer>{{copyright}}</footer>", "x\t \n", "{{ value}}\n{{>p}}\n"]) {
     const options = { preset: "recommended", filePath: "demo.hbs" };
     const fixed = fixExample(source, options);
     assert.deepEqual(fixed, fixText(source, {
@@ -86,7 +86,7 @@ test("playground fixes respect disabled rules, warning overrides, and Windows en
 });
 
 test("playground fixes preserve parse-error and unsupported input", () => {
-  for (const source of ["{{#if x}}  ", "{{ value}}\n"]) {
+  for (const source of ["{{#if x}}  ", "{{>\n p}}\n"]) {
     const original = lintExample(source);
     const fixed = fixExample(source);
     assert.equal(fixed.output, source);

@@ -1,5 +1,7 @@
 "use strict";
 
+const { traverseAst } = require("./traverse");
+
 function tokenizeHandlebars(text) {
   const tokens = [];
   let index = 0;
@@ -162,6 +164,81 @@ function getTagContentInfo(token) {
   };
 }
 
+function getFixableTokens(tokens, ast, sourceCode) {
+  const protectedRanges = [];
+  const statements = new Set();
+  const blockStarts = new Set();
+  const blockEnds = new Set();
+  const branchStarts = new Set();
+  const branchEnds = new Set();
+  const index = (location) => sourceCode.getIndexFromLoc({ ...location, column: location.column + 1 });
+  const protect = (node) => protectedRanges.push([index(node.loc.start), index(node.loc.end)]);
+  const statement = (node) => statements.add(`${index(node.loc.start)}:${index(node.loc.end)}`);
+  const block = (node) => {
+    blockStarts.add(index(node.loc.start));
+    const name = node.path || node.name;
+    const nameSource = sourceCode.text.slice(index(name.loc.start), index(name.loc.end));
+    // Closing paths are absent from the AST; braces in a name can hide extra scanned tags.
+    if (!/[{}]/u.test(nameSource)) {
+      blockEnds.add(index(node.loc.end));
+    }
+    for (const branch of [node.program, node.inverse]) {
+      if (branch?.loc) {
+        branchStarts.add(index(branch.loc.start));
+        branchEnds.add(index(branch.loc.end));
+      }
+    }
+  };
+  traverseAst(ast, {
+    ContentStatement: protect,
+    CommentStatement: protect,
+    Decorator: protect,
+    DecoratorBlock: protect,
+    StringLiteral: protect,
+    PathExpression: protect,
+    HashPair: protect,
+    MustacheStatement: statement,
+    PartialStatement: statement,
+    BlockStatement: block,
+    PartialBlockStatement: block,
+  });
+
+  protectedRanges.sort((left, right) => left[0] - right[0]);
+  const ranges = [];
+  for (const range of protectedRanges) {
+    const previous = ranges.at(-1);
+    if (previous && range[0] <= previous[1]) {
+      previous[1] = Math.max(previous[1], range[1]);
+    } else {
+      ranges.push(range);
+    }
+  }
+
+  const fixable = new Set();
+  let rangeIndex = 0;
+  for (const token of tokens) {
+    let safe = true;
+    for (const [start, end] of [
+      [token.startIndex, token.startIndex + token.openDelimiter.length],
+      [token.endIndex - token.closeDelimiter.length, token.endIndex],
+    ]) {
+      while (ranges[rangeIndex] && ranges[rangeIndex][1] <= start) rangeIndex += 1;
+      if (ranges[rangeIndex] && ranges[rangeIndex][0] < end) safe = false;
+    }
+
+    const matchesStatement = statements.has(`${token.startIndex}:${token.endIndex}`);
+    const matchesBlockStart = blockStarts.has(token.startIndex);
+    const isInverse = token.type === "else" && ["else", "^"].includes(extractTagPadding(token).body) &&
+      (branchEnds.has(token.startIndex) || branchStarts.has(token.endIndex));
+    const matchesBoundary = token.type === "block-close"
+      ? blockEnds.has(token.endIndex)
+      : matchesStatement || matchesBlockStart || isInverse;
+    // shortcut: ambiguous scanner boundaries stay manual; use a full lexer before expanding fixes.
+    if (safe && matchesBoundary) fixable.add(token);
+  }
+  return fixable;
+}
+
 function advanceText(text, position) {
   let line = position.line;
   let column = position.column;
@@ -191,6 +268,7 @@ function advanceChar(character, position) {
 
 module.exports = {
   extractTagPadding,
+  getFixableTokens,
   getTagContentInfo,
   tokenizeHandlebars,
 };
