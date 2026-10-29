@@ -2,11 +2,20 @@
 
 All notable changes to hbsguard will be documented in this file.
 
-## Unreleased
+## 0.6.0 — Unreleased
 
 ### Added
 
 - Add guarded automatic fixes for `mustache-spacing` and `partial-spacing` through `fixText`, CLI `--fix`, and the Playground. Fixes follow the configured spacing style and preserve trim markers; unsafe token boundaries and partial-marker spacing containing line breaks remain manual findings.
+- Add Tab/Shift+Tab indentation to the Playground template editor, with a documented keyboard escape for moving focus out.
+
+### Changed
+
+- Opt-in fixing now repairs enabled mustache and partial spacing rules, including those in the `recommended` preset. Ordinary lint diagnostics, default spacing styles, public API result shapes, and Node.js requirements are unchanged from 0.5.0. Review fix diffs when upgrading an existing fix workflow.
+
+### Fixed
+
+- Fix Playground highlighting for padded mustaches, else clauses, and raw-block openings so valid leading whitespace no longer leaves expression contents or closing braces uncolored.
 
 ## 0.5.0 — 2026-10-26
 
